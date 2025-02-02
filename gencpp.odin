@@ -82,7 +82,7 @@ Module_Flag :: enum(u32) {
 	Num_ModuleFlags,
 	Invalid,
 }
-ModuleFlags :: bit_set[Module_Flag; u32]
+Module_Flags :: bit_set[Module_Flag; u32]
 
 module_flag_to_str :: proc(flag : Module_Flag) -> string {
 	switch flag {
@@ -185,9 +185,9 @@ codetype_to_keyword_str :: proc(type : Code_Type) -> string
 		case Access_Public:                       return "public"
 		case Platform_Attributes:                 return "__NA__"
 		case Class, Class_Fwd:                    return "class"
-		case Class_Body,                \
+		case Class_Body,                  \
 			Constructor, Constructor_Fwd, \
-			Destructor,  Destructor_Fwd:            return "__NA__"
+			Destructor,  Destructor_Fwd:          return "__NA__"
 		case Enum, Enum_Fwd:                      return "enum"
 		case Enum_Body:                           return "__NA__"
 		case Enum_Class, Enum_Class_Fwd:          return "enum class"
@@ -195,13 +195,13 @@ codetype_to_keyword_str :: proc(type : Code_Type) -> string
 		case Extern_Linkege, Extern_Linkage_Body: return "extern"
 		case Friend:                              return "friend"
 		case Function, Function_Fwd, \
-				Function_Body, Global_Body:           return "__NA__"
+			Function_Body, Global_Body:           return "__NA__"
 		case Module:                              return "module"
 		case Namespace:                           return "namespace"
 		case Namespace_Body:                      return "__NA__"
 		case Operator, Operator_Fwd, \
-			Operator_Member_Fwd,       \
-			Operator_Cast, Operator_Cast_Fwd:       return "operator"
+			Operator_Member_Fwd,     \
+			Operator_Cast, Operator_Cast_Fwd:     return "operator"
 		case Parameters, Parameters_Define:       return "__NA__"
 		case Preprocess_Define:                   return "define"
 		case Preprocess_Include:                  return "include"
@@ -510,105 +510,105 @@ Token_Type :: enum(u32)
 toktype_to_str :: proc(type : Token_Type) -> string
 {
 	switch type {
-		case Invalid:                   return ""
-		case Access_Private:            return ""
-		case Access_Protected:          return ""
-		case Access_Public:             return ""
-		case Access_MemberSymbol:       return ""
-		case Access_StaticSymbol:       return ""
-		case Ampersand:                 return ""
-		case Ampersand_DBL:             return ""
-		case Assign_Classifer:          return ""
-		case Attribute_Open:            return ""
-		case Attribute_Close:           return ""
-		case BraceCurly_Open:           return ""
-		case BraceCurly_Close:          return ""
-		case BraceSquare_Open:          return ""
-		case BraceSquare_Close:         return ""
-		case Paren_Open:                return ""
-		case Paren_Close:               return ""
-		case Comment:                   return ""
-		case Comment_End:               return ""
-		case Comment_Start:             return ""
-		case Char:                      return ""
-		case Comma:                     return ""
-		case Decl_Class:                return ""
-		case Decl_GNU_Attribute:        return ""
-		case Decl_MSVC_Attribute:       return ""
-		case Decl_Enum:                 return ""
-		case Decl_Extern_Linkage:       return ""
-		case Decl_Friend:               return ""
-		case Decl_Module:               return ""
-		case Decl_Namespace:            return ""
-		case Decl_Operator:             return ""
-		case Decl_Struct:               return ""
-		case Decl_Template:             return ""
-		case Decl_Typedef:              return ""
-		case Decl_Using:                return ""
-		case Decl_Union:                return ""
-		case Identifier:                return ""
-		case Module_Import:             return ""
-		case Module_Export:             return ""
-		case NewLine:                   return ""
-		case Number:                    return ""
-		case Operator:                  return ""
-		case Preprocess_Hash:           return ""
-		case Preprocess_Define:         return ""
-		case Preprocess_Define_Param:   return ""
-		case Preprocess_If:             return ""
-		case Preprocess_IfDef:          return ""
-		case Preprocess_IfNotDef:       return ""
-		case Preprocess_ElIf:           return ""
-		case Preprocess_Else:           return ""
-		case Preprocess_EndIf:          return ""
-		case Preprocess_Include:        return ""
-		case Preprocess_Pragma:         return ""
-		case Preprocess_Content:        return ""
-		case Preprocess_Macro_Expr:     return ""
-		case Preprocess_Macro_Stmt:     return ""
-		case Preprocess_Macro_Typename: return ""
-		case Preprocess_Unsupported:    return ""
-		case Spec_Alignas:              return ""
-		case Spec_Const:                return ""
-		case Spec_Consteval:            return ""
-		case Spec_Constexpr:            return ""
-		case Spec_Constinit:            return ""
-		case Spec_Explicit:             return ""
-		case Spec_Extern:               return ""
-		case Spec_Final:                return ""
-		case Spec_ForceInline:          return ""
-		case Spec_Global:               return ""
-		case Spec_Inline:               return ""
-		case Spec_Internal_Linkage:     return ""
-		case Spec_LocalPersist:         return ""
-		case Spec_Mutable:              return ""
-		case Spec_NeverInline:          return ""
-		case Spec_Override:             return ""
-		case Spec_Restrict:             return ""
-		case Spec_Static:               return ""
-		case Spec_ThreadLocal:          return ""
-		case Spec_Volatile:             return ""
-		case Spec_Virtual:              return ""
-		case Star:                      return ""
-		case Statement_End:             return ""
-		case StaticAssert:              return ""
-		case String:                    return ""
-		case Type_Typename:             return ""
-		case Type_Unsigned:             return ""
-		case Type_Signed:               return ""
-		case Type_Short:                return ""
-		case Type_Long:                 return ""
-		case Type_bool:                 return ""
-		case Type_char:                 return ""
-		case Type_int:                  return ""
-		case Type_double:               return ""
-		case Type_MS_int8:              return ""
-		case Type_MS_int16:             return ""
-		case Type_MS_int32:             return ""
-		case Type_MS_int64:             return ""
-		case Type_MS_W64:               return ""
-		case Varadic_Argument:          return ""
-		case Tok___Attributes_Start:    return ""
+		case Invalid:                   return "INVALID"
+		case Access_Private:            return "private"
+		case Access_Protected:          return "protected"
+		case Access_Public:             return "public"
+		case Access_MemberSymbol:       return "."
+		case Access_StaticSymbol:       return "::"
+		case Ampersand:                 return "&"
+		case Ampersand_DBL:             return "&&"
+		case Assign_Classifer:          return ":"
+		case Attribute_Open:            return "[["
+		case Attribute_Close:           return "]]"
+		case BraceCurly_Open:           return "{"
+		case BraceCurly_Close:          return "}"
+		case BraceSquare_Open:          return "["
+		case BraceSquare_Close:         return "]"
+		case Paren_Open:                return "("
+		case Paren_Close:               return ")"
+		case Comment:                   return "__comment__"
+		case Comment_End:               return "__comment_end__"
+		case Comment_Start:             return "__comment_start__"
+		case Char:                      return "__character__"
+		case Comma:                     return ","
+		case Decl_Class:                return "class"
+		case Decl_GNU_Attribute:        return "__atribute__"
+		case Decl_MSVC_Attribute:       return "__declspec"
+		case Decl_Enum:                 return "enum"
+		case Decl_Extern_Linkage:       return "extern"
+		case Decl_Friend:               return "friend"
+		case Decl_Module:               return "module"
+		case Decl_Namespace:            return "namespace"
+		case Decl_Operator:             return "operator"
+		case Decl_Struct:               return "struct"
+		case Decl_Template:             return "template"
+		case Decl_Typedef:              return "typedef"
+		case Decl_Using:                return "using"
+		case Decl_Union:                return "union"
+		case Identifier:                return "__identifier__"
+		case Module_Import:             return "import"
+		case Module_Export:             return "export"
+		case NewLine:                   return "__new_line__"
+		case Number:                    return "__number__"
+		case Operator:                  return "operator"
+		case Preprocess_Hash:           return "#"
+		case Preprocess_Define:         return "define"
+		case Preprocess_Define_Param:   return "__define_param__"
+		case Preprocess_If:             return "if"
+		case Preprocess_IfDef:          return "ifdef"
+		case Preprocess_IfNotDef:       return "ifndef"
+		case Preprocess_ElIf:           return "elif"
+		case Preprocess_Else:           return "else"
+		case Preprocess_EndIf:          return "endif"
+		case Preprocess_Include:        return "include"
+		case Preprocess_Pragma:         return "pragma"
+		case Preprocess_Content:        return "__macro_content__"
+		case Preprocess_Macro_Expr:     return "__macro_expansion__"
+		case Preprocess_Macro_Stmt:     return "__macro_statement__"
+		case Preprocess_Macro_Typename: return "__macro_typename__"
+		case Preprocess_Unsupported:    return "__unsupported__"
+		case Spec_Alignas:              return "alignas"
+		case Spec_Const:                return "const"
+		case Spec_Consteval:            return "consteval"
+		case Spec_Constexpr:            return "constexpr"
+		case Spec_Constinit:            return "constinit"
+		case Spec_Explicit:             return "explicti"
+		case Spec_Extern:               return "extern"
+		case Spec_Final:                return "final"
+		case Spec_ForceInline:          return "forceinline"
+		case Spec_Global:               return "global"
+		case Spec_Inline:               return "inline"
+		case Spec_Internal_Linkage:     return "internal"
+		case Spec_LocalPersist:         return "local_persist"
+		case Spec_Mutable:              return "mutable"
+		case Spec_NeverInline:          return "neverinline"
+		case Spec_Override:             return "override"
+		case Spec_Restrict:             return "restrict"
+		case Spec_Static:               return "static"
+		case Spec_ThreadLocal:          return "thread_local"
+		case Spec_Volatile:             return "volatile"
+		case Spec_Virtual:              return "virtual"
+		case Star:                      return "*"
+		case Statement_End:             return ";"
+		case Static_Assert:             return "static_assert"
+		case String:                    return "__string_"
+		case Type_Typename:             return "typename"
+		case Type_Unsigned:             return "unsigned"
+		case Type_Signed:               return "signed"
+		case Type_Short:                return "short"
+		case Type_Long:                 return "long"
+		case Type_bool:                 return "bool"
+		case Type_char:                 return "char"
+		case Type_int:                  return "int"
+		case Type_double:               return "double"
+		case Type_MS_int8:              return "__int8"
+		case Type_MS_int16:             return "__int16"
+		case Type_MS_int32:             return "__int32"
+		case Type_MS_int64:             return "__int64"
+		case Type_MS_W64:               return "_W64"
+		case Varadic_Argument:          return "..."
+		case Tok___Attributes_Start:    return "__attrib_start__"
 	}
 }
 
@@ -771,7 +771,7 @@ foreign gen {
 	Code_Invalid : Code
 }
 
-AST  :: struct
+AST :: struct
 {
 	using _ : struct #raw_union
 	{
@@ -805,7 +805,7 @@ AST  :: struct
 				post_name_macro : Code, // Only used with parameters for specifically UE_REQUIRES (Thanks Unreal)
 			},
 		},
-		content : string_cache,
+		content : string_cached,
 		using _ : struct {
 			arr_specs  : [AST_ARRAY_SPECS_CAP]Specifier,
 			next_specs : Code,
@@ -824,7 +824,7 @@ AST  :: struct
 	token        : ^Token,
 	parent       : Code,
 	type         : Code_Type,
-	module_flags : Module_Flag,
+	module_flags : Module_Flags,
 	using _ : struct #raw_union
 	{
 		is_function : b32,
@@ -949,6 +949,8 @@ foreign gen
 	code__duplicate     :: proc(code        : Code) -> Code       ---
 	code__is_equal      :: proc(code        : Code) -> bool       ---
 	code__to_strbuilder :: proc(code        : Code) -> strbuilder ---
+
+	
 }
 
 
@@ -968,7 +970,7 @@ foreign gen
 */
 
 AST_Body :: struct {
-	_ : struct {
+	using _ : struct {
 		_PAD_ : [64]byte,
 	},
 	name         : string_cache,
@@ -982,7 +984,511 @@ AST_Body :: struct {
 }
 
 AST_Attributes :: struct {
+	using _ : struct #raw_union {
+		_PAD_   : [64]byte,
+		content : string_cached,
+	},
+	name   : string_cached,
+	prev   : Code,
+	next   : Code,
+	token  : ^Token,
+	parent : Code,
+	type   : Code_Type,
+	_PAD_UNUSED_ : [sizeof(Module_Flag) + sizeof(u32)]byte
+}
 
+AST_Comment :: struct {
+	using _ : struct #raw_union {
+		_PAD_   : [64]byte,
+		content : string_cached,
+	},
+	name   : string_cached,
+	prev   : Code,
+	next   : Code,
+	token  : ^Token,
+	parent : Code,
+	type   : Code_Type,
+	_PAD_UNUSED_ : [sizeof(Module_Flag) + sizeof(u32)]byte
+}
+
+AST_Class :: struct {
+	using _ : struct #raw_union {
+		_PAD_ : [64]byte,
+		using _ : struct {
+			inline_cmt    : Code_Comment,
+			attributes    : Code_Attributes,
+			specs         : Code_Specifiers,
+			parent_type   : Code_Typename,
+			_PAD_PARARMS_ : [ sizeof(Code) ]byte,
+			body          : Code_Body,
+			_PAD_PROPERTIES_2_ : [sizeof(Code) ]byte,
+		}
+	},
+	name        : string_cache,
+	prev        : Code,
+	next        : Code,
+	token       : ^Token,
+	parent      : Code,
+	type        : Code_Type,
+	moule_flags : Module_Flags,
+	access_spec : Access_Spec,
+}
+
+AST_Constructor :: struct {
+	using _ : struct #raw_union {
+		_PAD_ : [64]byte,
+		using _ : struct {
+			inline_cmt       : Code_Comment,
+			_PAD_PROPERTIES_ : [sizeof(Code)]byte,
+			specs            : Code_Specifiers,
+			initializer_list : Code,
+			params           : Code_Params,
+			body             : Code,
+			_PAD_PROPERTIES_2_ : [sizeof(Code) * 2]byte,
+		}
+	},
+	name   : string_cache,
+	prev   : Code,
+	next   : Code,
+	token  : ^Token,
+	parent : Code,
+	type   : Code_Type,
+	_PAD_UNUSED_ : [sizeof(Module_Flag) + sizeof(u32)]byte
+}
+
+AST_Define :: struct {
+	using _ : struct #raw_union {
+		_PAD_ : [64]byte,
+		using _ : struct {
+			_PAD_PROPERTIES_ : [sizeof(Code) * 4]byte,
+			params : Code_Define_Params,
+			body : Code,
+			_PAD_PROPERTIES_2_ : [sizeof(Code)]byte,
+		},
+	},
+	name   : string_cached,
+	prev   : Code,
+	next   : Code,
+	token  : ^Token,
+	parent : Code,
+	type   : Code_Type,
+	_PAD_UNUSED_ : [sizeof(Module_Flag) + sizeof(u32)]byte,
+}
+
+AST_Define_Params :: struct {
+	using _ : struct #raw_union {
+		_PAD_ : [64]byte,
+	},
+	name        : string_cached,
+	prev        : Code,
+	next        : Code,
+	token       : ^Token,
+	parent      : Code,
+	type        : Code_Type,
+	_PAD_UNUSED_ : [sizeof(Module_Flag)]byte,
+	num_entries : i32,
+}
+
+AST_Destructor :: struct {
+	using _ : struct #raw_union {
+		_PAD_ : [64]byte,
+		using _ : struct {
+			inline_cmt         : Code_Comment,
+			_PAD_PROPERTIES    : [sizeof(Code)]byte,
+			specs              : Code_Specifiers,
+			_PAD_PROPERTIES_2_ : [sizeof(Code) * 2]byte,
+			body               : Code,
+			_PAD_PROPERTIES_3_ : [sizeof(Code)]byte,
+		},
+	},
+	name   : string_cached,
+	prev   : Code,
+	next   : Code,
+	token  : ^Token,
+	parent : Code,
+	type   : Code_Type,
+	_PAD_UNUSED_ : [sizeof(Module_Flag) + sizeof(u32)]byte,
+}
+
+AST_Enum :: struct {
+	using _ : struct #raw_union {
+		_PAD_ : [64]byte,
+		using _ : struct {
+			inline_cmt            : Code_Comment,
+			attributes            : Code_Attributes,
+			_PAD_SPEC_            : [sizeof(Code)]byte,
+			underlying_type       : Code_Typename,
+			underlying_type_macro : Code,
+			body                  : Code_Body,
+			_PAD_PROPERTIES_2_    : [sizeof(Code)]byte,
+		},
+	},
+	name        : string_cached,
+	prev        : Code,
+	next        : Code,
+	token       : ^Token,
+	parent      : Code,
+	type        : Code_Type,
+	module_flag : Module_Flags,
+	_PAD_UNUSED_ : [sizeof(u32)]byte,
+}
+
+// AST_Exec
+
+AST_Extern :: struct {
+	using _ : struct #raw_union {
+		_PAD_ : [64]byte,
+		using _ : struct {
+			_PAD_PROPERTIES_   : [sizeof(Code) * 5]byte,
+			body               : Code_Body,
+			_PAD_PROPERTIES_2_ : [sizeof(Code)]byte,
+		},
+	},
+	name   : string_cached,
+	prev   : Code,
+	next   : Code,
+	token  : ^Token,
+	parent : Code,
+	type   : Code_Type,
+	_PAD_UNUSED_ : [sizeof(Module_Flag) + sizeof(u32)]byte,
+}
+
+AST_Include :: struct {
+	using _ : struct #raw_union {
+		_PAD_   : [64]byte,
+		content : string_cached,
+	},
+	name   : string_cached,
+	prev   : Code,
+	next   : Code,
+	token  : ^Token,
+	parent : Code,
+	type   : Code_Type,
+	_PAD_UNUSED_ : [sizeof(Module_Flags) + sizeof(u32)]byte,
+}
+
+AST_Friend :: struct {
+	using _ : struct #raw_union {
+		_PAD_   : [64]byte,
+		using _ : struct {
+			inline_cmt : Code_Comment,
+			_PAD_PROPRTIES_ : [sizeof(Code)]byte,
+			declaration : Code,
+			_PAD_PROPERTIES_ : [sizeof(Code)]byte,
+		},
+	},
+	name   : string_cached,
+	prev   : Code,
+	next   : Code,
+	token  : ^Token,
+	parent : Code,
+	type   : Code_Type,
+	_PAD_UNUSED_ : [sizeof(Module_Flags) + sizeof(u32)]byte,
+}
+
+AST_Fn :: struct {
+	using _ : struct #raw_union {
+		_PAD_   : [64]byte,
+	},
+	name         : string_cached,
+	prev         : Code,
+	next         : Code,
+	token        : ^Token,
+	parent       : Code,
+	type         : Code_Type,
+	module_flags : Module_Flags,
+	_PAD_UNUSED_ : [sizeof(u32)]byte,
+}
+
+AST_Module :: struct {
+	using _ : struct #raw_union {
+		_PAD_   : [64]byte,
+	},
+	name         : string_cached,
+	prev         : Code,
+	next         : Code,
+	token        : ^Token,
+	parent       : Code,
+	type         : Code_Type,
+	module_flags : Module_Flags,
+	_PAD_UNUSED_ : [sizeof(u32)]byte,
+}
+
+AST_NS :: struct {
+	using _ : struct #raw_union {
+		_PAD_   : [64]byte,
+		using _ : struct {
+			_PAD_PROPRTIES_ : [sizeof(Code) * 5]byte,
+			body : Code_Body,
+			_PAD_PROPERTIES_ : [sizeof(Code)]byte,
+		},
+	},
+	name         : string_cached,
+	prev         : Code,
+	next         : Code,
+	token        : ^Token,
+	parent       : Code,
+	type         : Code_Type,
+	module_flags : Module_Flags,
+	_PAD_UNUSED_ : [sizeof(u32)]byte,
+}
+
+AST_Operator :: struct {
+	using _ : struct #raw_union {
+		_PAD_   : [64]byte,
+		using _ : struct {
+			inline_cmt  : Code_Comment,
+			attributes  : Code_Attributes,
+			specs       : Code_Specifiers,
+			return_type : Code_Typename,
+			params      : Code_Params,
+			body        : Code_Body,
+			_PAD_PROPERTIES_ : [sizeof(Code)]byte,
+		},
+	},
+	name        : string_cached,
+	prev        : Code,
+	next        : Code,
+	token       : ^Token,
+	parent      : Code,
+	type        : Code_Type,
+	module_flag : Module_Flags,
+	operator    : Operator,
+}
+
+AST_Op_Cast :: struct {
+	using _ : struct #raw_union {
+		_PAD_   : [64]byte,
+		using _ : struct {
+			inline_cmt         : Code_Comment,
+			_PAD_PROPERTIES_   : [sizeof(Code)]byte,
+			specs              : Code_Specifiers,
+			value_type         : Code_Typename,
+			_PAD_PROPERTIES_2_ : [sizeof(Code)]byte,
+			body               : Code_Body,
+			_PAD_PROPERTIES_3_ : [sizeof(Code)]byte,
+		},
+	},
+	name   : string_cached,
+	prev   : Code,
+	next   : Code,
+	token  : ^Token,
+	parent : Code,
+	type   : Code_Type,
+	_PAD_UNUSED_ : [sizeof(Module_Flags) + sizeof(u32)]byte,
+}
+
+AST_Params :: struct {
+	using _ : struct #raw_union {
+		_PAD_   : [64]byte,
+		using _ : struct {
+			_PAD_PROPERTIES_2_ : [sizeof(Code) * 3]byte,
+			value_type         : Code_Typename,
+			macro              : Code,
+			value              : Code,
+			post_name_macro    : Code,
+		},
+	},
+	name        : string_cached,
+	prev        : Code,
+	next        : Code,
+	token       : ^Token,
+	parent      : Code,
+	type        : Code_Type,
+	_PAD_UNUSED_ : [sizeof(Module_Flags)]byte,
+	num_entries : i32,
+}
+
+AST_Pragma :: struct {
+	using _ : struct #raw_union {
+		_PAD_   : [64]byte,
+		content : string_cached,
+	},
+	name        : string_cached,
+	prev        : Code,
+	next        : Code,
+	token       : ^Token,
+	parent      : Code,
+	type        : Code_Type,
+	_PAD_UNUSED_ : [sizeof(Module_Flags) + sizeof(u32)]byte,
+}
+
+AST_Preprocess_Cond :: struct {
+	using _ : struct #raw_union {
+		_PAD_   : [64]byte,
+		content : string_cached,
+	},
+	name        : string_cached,
+	prev        : Code,
+	next        : Code,
+	token       : ^Token,
+	parent      : Code,
+	type        : Code_Type,
+	_PAD_UNUSED_ : [sizeof(Module_Flags) + sizeof(u32)]byte,
+}
+
+AST_Specifiers :: struct {
+	arr_specs   : [AST_ARRAY_SPECS_CAP]Specifier,
+	next_specs  : Code,
+	name        : string_cached,
+	prev        : Code,
+	next        : Code,
+	token       : ^Token,
+	parent      : Code,
+	type        : Code_Type,
+	_PAD_UNUSED_ : [sizeof(Module_Flags)]byte,
+	num_entries : i32,
+}
+
+AST_Struct :: struct {
+	using _ : struct #raw_union {
+		_PAD_   : [64]byte,
+		using _ : struct {
+			inline_cmt   : Code_Comment,
+			attributes   : Code_Attributes,
+			specs        : Code_Specifiers,
+			parent_type  : Code_Typename,
+			_PAD_PARAMS_ : [sizeof(Code)]byte,
+			body         : Code_Body,
+			_PAD_PROPERTIES_2_ : [sizeof(Code)]byte,
+		},
+	},
+	name         : string_cached,
+	prev         : Code_Typename,
+	next         : Code_Typeanme,
+	token        : ^Token,
+	parent       : Code,
+	type         : Code_Type,
+	module_flags : Module_Flags,
+	num_entries  : i32,
+}
+
+AST_Template :: struct {
+	using _ : struct #raw_union {
+		_PAD_   : [64]byte,
+		using _ : struct {
+			_PAD_PROPERTIES_ : [sizeof(Code)* 4]byte,
+			params      : Code_Params,
+			declaration : Code,
+			_PAD_PROPERTIES_2_ : [sizeof(Code)]byte,
+		},
+	},
+	name         : string_cached,
+	prev         : Code_Typename,
+	next         : Code_Typeanme,
+	token        : ^Token,
+	parent       : Code,
+	type         : Code_Type,
+	module_flags : Module_Flags,
+	_PAD_UNUSED_ : [sizeof(u32)]byte,
+}
+
+AST_Typename :: struct {
+	using _ : struct #raw_union {
+		_PAD_   : [64]byte,
+		using _ : struct {
+			_PAD_INLINE_CMT_  : [sizeof(Code)]byte,
+			attributes        : Code_Attributes,
+			specs             : Code_Specifiers,
+			return_type       : Code_Typename,
+			params            : Code_Params,
+			arr_expr          : Code,
+			specs_func_suffix : Code_Specifiers,
+		},
+	},
+	name   : string_cached,
+	prev   : Code,
+	next   : Code,
+	token  : ^Token,
+	parent : Code,
+	type   : Code_Type,
+	_PAD_UNUSED_ : [sizeof(Module_Flags)]byte,
+	using _ : struct {
+		is_param_pack : b16,
+		type_tag      : Typename_Tag,
+	}
+}
+
+AST_Typedef :: struct {
+	using _ : struct #raw_union {
+		_PAD_   : [64]byte,
+		using _ : struct {
+			inline_cmt         : Code_Comment,
+			_PAD_PROPERTIES_   : [sizeof(Code) * 2]byte,
+			underlying_type    : Code,
+			_PAD_PROPERTIES_2_ : [sizeof(Code) * 3]byte,
+		},
+	},
+	name         : string_cached,
+	prev         : Code,
+	next         : Code,
+	token        : ^Token,
+	parent       : Code,
+	type         : Code_Type,
+	module_flags : Module_Flags,
+	is_function  : b3,
+}
+
+AST_Union :: struct {
+	using _ : struct #raw_union {
+		_PAD_   : [64]byte,
+		using _ : struct {
+			_PAD_INLINE_CMT_   : [sizeof(Code)]byte,
+			attributes         : Code_Attributes,
+			_PAD_PROPERTIES_   : [sizeof(Code) * 3]byte,
+			body               : Code_Body,
+			_PAD_PROPERTIES_2_ : [sizeof(Code)]byte,
+		},
+	},
+	name         : string_cached,
+	prev         : Code,
+	next         : Code,
+	token        : ^Token,
+	parent       : Code,
+	type         : Code_Type,
+	module_flags : Module_Flags,
+	_PAD_UNUSED_ : [sizeof(u32)]byte,
+}
+
+AST_Using :: struct {
+	using _ : struct #raw_union {
+		_PAD_   : [64]byte,
+		using _ : struct {
+			inline_cmt       : Code_Comment,
+			attributes       : Code_Attributes,
+			_PAD_SPECS_      : [sizeof(Code)]byte,
+			underlying_type  : Code_Typename,
+			_PAD_PROPERTIES_ : [sizeof(Code)]byte,
+		},
+	},
+	name         : string_cached,
+	prev         : Code,
+	next         : Code,
+	token        : ^Token,
+	parent       : Code,
+	code_type    : Code_Type,
+	module_flags : Module_Flags,
+	_PAD_UNUSED_ : [sizeof(u32)]byte,
+}
+
+AST_Var :: struct {
+	using _ : struct #raw_union {
+		_PAD_   : [64]byte,
+		using _ : struct {
+			inline_cmt : Code_Comment,
+			attributes : Code_Attributes,
+			specs      : Code_Specifiers,
+			value_type : Code_Typename,
+		},
+	},
+	name                    : string_cached,
+	prev                    : Code,
+	next                    : Code,
+	token                   : ^Token,
+	parent                  : Code,
+	type                    : Code_Type,
+	module_flags            : Module_Flags,
+	var_parenthesiszed_init : s32,
 }
 
 /*
@@ -1063,7 +1569,7 @@ Str_Builder :: struct {
 strbuilder_header :: #force_inline proc(builder : Str_Builder) -> Str_Builder_Header { return mem.ptr_offset(cast(^Str_Builder_Header)(builder), -1) }
 strbuilder_to_str :: #force_inline proc(builder : Str_Builder) -> string             { return transmute(string) builder.data[:strbuilder_header(builder).length] }
 
-// strbuilder is fully-inline in the C. So we're just re-implementing here.
+// strbuilder is fully-inline in the header. So we're just re-implementing here.
 
 strbuiilder_make_str :: proc(allocator := USE_TEMP_ALLOCATOR, str : string) -> Str_Builder {
 	return {}
