@@ -1276,7 +1276,7 @@ gen_forceinline gen_TokType gen_macrotype__to_toktype(gen_MacroType type)
 	return Tok_Invalid;
 }
 
-inline gen_Str gen_macrotype__to_str(gen_MacroType type)
+inline gen_Str gen_macrotype_to_str(gen_MacroType type)
 {
 	gen_local_persist gen_Str lookup[] = {
 		{ "Statement",      sizeof("Statement") - 1      },
@@ -1468,18 +1468,18 @@ typedef gen_AST_Var*      gen_CodeVar;
 #pragma region gen_Code C-Interface
 
 
-GEN_API void           gen_code__append(gen_Code code, gen_Code other);
+        void           gen_code__append(gen_Code code, gen_Code other);
 GEN_API gen_Str        gen_code__debug_str(gen_Code code);
 GEN_API gen_Code       gen_code__duplicate(gen_Code code);
-GEN_API gen_Code*      gen_code__entry(gen_Code code, gen_u32 idx);
-GEN_API bool           gen_code__has_entries(gen_Code code);
-GEN_API bool           gen_code__is_body(gen_Code code);
+        gen_Code*      gen_code__entry(gen_Code code, gen_u32 idx);
+        bool           gen_code__has_entries(gen_Code code);
+        bool           gen_code__is_body(gen_Code code);
 GEN_API bool           gen_code__is_equal(gen_Code code, gen_Code other);
-GEN_API bool           gen_code__is_valid(gen_Code code);
-GEN_API void           gen_code__set_global(gen_Code code);
+        bool           gen_code__is_valid(gen_Code code);
+        void           gen_code__set_global(gen_Code code);
 GEN_API gen_StrBuilder gen_code__to_strbuilder(gen_Code self);
 GEN_API void           gen_code__to_strbuilder_ptr(gen_Code self, gen_StrBuilder* result);
-GEN_API gen_Str        gen_code__type_str(gen_Code self);
+        gen_Str        gen_code__type_str(gen_Code self);
 GEN_API bool           gen_code__validate_body(gen_Code self);
 
 #pragma endregion gen_Code C - Interface
