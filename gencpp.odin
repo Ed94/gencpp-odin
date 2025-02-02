@@ -23,6 +23,7 @@ package gencpp
 
 import c "core:c"
 import   "core:mem"
+import   "core:reflect"
 
 /*
  ________                                              __    __      ________
@@ -732,9 +733,6 @@ macro_expects_body  :: #force_inline proc(macro : Macro) -> bool { return .Expec
  \▓▓   \▓▓ \▓▓▓▓▓▓    \▓▓        \▓▓   \▓▓      \▓▓▓▓▓▓  \▓▓▓▓▓▓  \▓▓▓▓▓▓▓ \▓▓▓▓▓▓▓
 */
 
-AST_POD_SIZE        :: 128
-AST_ARRAY_SPECS_CAP :: 14
-
 Code                 :: ^AST
 Code_Body            :: ^AST_Body
 Code_Attributes      :: ^AST_Attributes
@@ -768,8 +766,12 @@ Code_Var             :: ^AST_Var
 
 @(default_calling_convention="c", link_prefix="gen_")
 foreign gen {
+	Code_Global  : Code
 	Code_Invalid : Code
 }
+
+AST_POD_SIZE        :: 128
+AST_ARRAY_SPECS_CAP :: 14
 
 AST :: struct
 {
@@ -851,51 +853,51 @@ AST :: struct
 */
 
 append :: proc {
-	append_code,
-	append_body,
-	append_attributes,
-	append_comment,
-	append_class,
-	append_constructor,
-	append_define,
-	append_define_params,
-	append_destructor,
-	append_enum,
+	// append_code,
+	// append_body,
+	// append_attributes,
+	// append_comment,
+	// append_class,
+	// append_constructor,
+	// append_define,
+	// append_define_params,
+	// append_destructor,
+	// append_enum,
 	// append_exec,
-	append_include,
-	append_friend,
-	append_fn,
-	append_module,
-	append_ns,
-	append_operator,
-	append_op_cast,
-	append_pragma,
-	append_params,
-	append_preprocess_cond,
-	append_specifiers,
-	append_struct,
-	append_template,
-	append_typename,
-	append_typename,
-	append_typedef,
-	append_union,
-	append_using,
-	append_var
+	// append_include,
+	// append_friend,
+	// append_fn,
+	// append_module,
+	// append_ns,
+	// append_operator,
+	// append_op_cast,
+	// append_pragma,
+	// append_params,
+	// append_preprocess_cond,
+	// append_specifiers,
+	// append_struct,
+	// append_template,
+	// append_typename,
+	// append_typename,
+	// append_typedef,
+	// append_union,
+	// append_using,
+	// append_var
 }
 
 debug_str :: proc {
-	debug_str_code,
-	debug_str_body,
-	debug_str_attributes,
-	debug_str_comment,
-	debug_str_class,
-	debug_str_constructor,
-	debug_str_define,
-	debug_str_define_params,
-	debug_str_destructor,
-	debug_str_enum,
+	// debug_str_code,
+	// debug_str_body,
+	// debug_str_attributes,
+	// debug_str_comment,
+	// debug_str_class,
+	// debug_str_constructor,
+	// debug_str_define,
+	// debug_str_define_params,
+	// debug_str_destructor,
+	// debug_str_enum,
 	// debug_str_exec,
-	debug_str
+	// debug_str
 }
 
 duplicate :: proc {
@@ -911,7 +913,7 @@ has_entries :: proc {
 }
 
 is_body :: proc {
-
+	code_is_body,
 }
 
 is_equal :: proc {
@@ -942,6 +944,122 @@ validate_body :: proc {
 
 }
 
+code_append :: proc(self, other : Code) {
+	assert(self != nil)
+	assert(other != nil)
+	assert(self != other)
+	if (other.parent != nil)
+		other = gen.code__duplicate(other)
+
+	other.parent = self
+
+	if (self.front == nil)
+	{
+		self.front = other
+		self.back  = other
+		self.num_entries += 1
+		return
+	}
+
+	current     := self.back
+	current.next = other
+	other.prev   = current
+	self.back    = other
+	self.num_entries += 1
+}
+
+code_duplicate :: gen.code__duplicate
+
+code_is_body :: proc(code : Code) {
+	assert(code != nil)
+	switch(code.type) {
+		case \
+			.Enum_Body, 
+			.Class_Body, 
+			.Union_Body, 
+			.Export_Body, 
+			.Global_Body, 
+			.Struct_Body, 
+			.Function_Body, 
+			.Namespace_Body, 
+			.Extern_Linkage_Body: \
+		return true
+	}
+	return false;
+}
+
+code_entry :: proc(self : Code, idx : u32) -> ^Code {
+	assert(self != nil)
+	current := & self.front
+	for idx >= 0 && current != nil {
+		if idx == 0 do return currrent
+
+		current & current.next
+		idx -= 1
+	}
+	return current
+}
+
+code_is_valid :: #force_inline proc(self : Code) -> bool {
+	assert(self != nil)
+	return self != nil && self.type != .Invalid
+}
+
+code_has_entries :: #force_inline proc(self : Code) -> bool {
+	assert(self != nil)
+	return self.num_entries > 0
+}
+
+code_set_global :: #force_inline proc(self : Code) {
+	assert(self != nil)
+	self.parent = Code_Global
+}
+
+code_type_str :: #force_inline proc(self : Code) {
+	assert(self != nil)
+	return reflect.enum_name_from_value(self.type)
+}
+
+body_append_code :: proc(body : Code_Body, Code other) {
+	assert(body != nil)
+	assert(other != nil)
+	if code_is_body(other) {
+		body_append_body(body, cast(Code_Body) other)
+		return
+	}
+	code_append(cast(Code) body, other)
+}
+
+body_append_body :: proc(body, other : Code_Body) {
+	assert(body != nil)
+	assert(other != nil)
+	assert(body != other)
+	for entry := begin_body(body); entry != end_body(body); entry = next_body(body) {
+		body_append_code(body, entry)
+	}
+}
+
+begin_body :: proc(body : Code_Body) -> Code { assert(body != nil)
+	assert(body != nil)
+	return body.front
+}
+
+next_body :: proc(body : Code_Body, code : Code) -> Code {
+	assert(body != nil)
+	assert(code != nil)
+	assert(code.parent == body)
+	return code.next
+}
+
+end_body :: proc(body : Code_Body) -> Code {
+	assert(body != nil)
+	return body.back.next
+}
+
+class_add_interface :: proc(class : Code_Class, type : Code_Typename) {
+	
+}
+
 @(default_calling_convention="c", link_prefix="gen_")
 foreign gen
 {
@@ -950,9 +1068,10 @@ foreign gen
 	code__is_equal      :: proc(code        : Code) -> bool       ---
 	code__to_strbuilder :: proc(code        : Code) -> strbuilder ---
 
-	
+	body_to_strbuilder        :: proc(body : Code_Body) -> StrBuilder           ---
+	body_to_strbuilder_ref    :: proc(body : Code_Body, builder : ^Str_Builder) ---
+	body_to_strbuilder_export :: proc(body : Code_Body, builder : ^Str_Builder) ---
 }
-
 
 /*
   ______   ______  ________      ________
