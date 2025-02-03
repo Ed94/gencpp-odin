@@ -7,20 +7,19 @@ main :: proc() {
 	ctx : cpp.Context
 	cpp.init(& ctx)
 
-	src_hellope : cpp.Builder  := cpp.builder_open("gen/hellope.c")
-	hellope_var : cpp.Code_Var := cpp.parse_variable(
+	src_hellope := cpp.builder_open("gen/hellope.c")
+	hellope_var := cpp.parse_variable(
 		"char const* hellope_gencpp_str" = "HELLOPE GENCPP ODIN !"
 	)
 	cpp.builder_print(& src_hellope, hellope_var)
 	cpp.builder_write(& src_hellope)
 
 	body := cpp.parse_file("gen/hellope.c")
-	iter := cpp.body_iter(body)
-	for code := iter.peek(); code != cpp.body_iter_end(iter); code = iter.next() {
+	for code := cpp.begin(body); code != cpp.end(body); code = cpp.next(body, code) {
 		switch(code.type) {
 			case .Variable:
-				var := cast(Code_Var) code
-				fmt.tprintf("%v", cpp.var_to_string(var.value))
+				var := cast(cpp.Code_Var) code
+				fmt.tprintf("%v", cpp.to_string(var.value))
 		}
 	}
 

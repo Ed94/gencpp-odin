@@ -733,36 +733,36 @@ macro_expects_body  :: #force_inline proc(macro : Macro) -> bool { return .Expec
  \▓▓   \▓▓ \▓▓▓▓▓▓    \▓▓        \▓▓   \▓▓      \▓▓▓▓▓▓  \▓▓▓▓▓▓  \▓▓▓▓▓▓▓ \▓▓▓▓▓▓▓
 */
 
-Code                 :: ^AST
-Code_Body            :: ^AST_Body
-Code_Attributes      :: ^AST_Attributes
-Code_Comment         :: ^AST_Comment
-Code_Class           :: ^AST_Class
-Code_Constructor     :: ^AST_Constructor
-Code_Define          :: ^AST_Define
-Code_Define_Params   :: ^AST_Define_Params
-Code_Destructor      :: ^AST_Destructor
-Code_Enum            :: ^AST_Enum
-// Code_Exec            :: ^AST_Exec
-Code_Extern          :: ^AST_Extern
-Code_Include         :: ^AST_Include
-Code_Friend          :: ^AST_Friend
-Code_Fn              :: ^AST_Fn
-Code_Module          :: ^AST_Module
-Code_NS              :: ^AST_NS
-Code_Operator        :: ^AST_Operator
-Code_Op_Cast         :: ^AST_Op_Cast
-Code_Params          :: ^AST_Define_Params
-Code_Preprocess_Cond :: ^AST_Preprocess_Cond
-Code_Pragma          :: ^AST_Pragma
-Code_Specifiers      :: ^AST_Sepcifiers
-Code_Struct          :: ^AST_Struct
-Code_Template        :: ^AST_Template
-Code_Typename        :: ^AST_Typename
-Code_Typedef         :: ^AST_Typedef
-Code_Union           :: ^AST_Union
-Code_Using           :: ^AST_Using
-Code_Var             :: ^AST_Var
+Code                 :: distinct ^AST
+Code_Body            :: distinct ^AST_Body
+Code_Attributes      :: distinct ^AST_Attributes
+Code_Comment         :: distinct ^AST_Comment
+Code_Class           :: distinct ^AST_Class
+Code_Constructor     :: distinct ^AST_Constructor
+Code_Define          :: distinct ^AST_Define
+Code_Define_Params   :: distinct ^AST_Define_Params
+Code_Destructor      :: distinct ^AST_Destructor
+Code_Enum            :: distinct ^AST_Enum
+Code_Exec            :: distinct ^AST_Exec
+Code_Extern          :: distinct ^AST_Extern
+Code_Include         :: distinct ^AST_Include
+Code_Friend          :: distinct ^AST_Friend
+Code_Fn              :: distinct ^AST_Fn
+Code_Module          :: distinct ^AST_Module
+Code_NS              :: distinct ^AST_NS
+Code_Operator        :: distinct ^AST_Operator
+Code_Op_Cast         :: distinct ^AST_Op_Cast
+Code_Params          :: distinct ^AST_Define_Params
+Code_Preprocess_Cond :: distinct ^AST_Preprocess_Cond
+Code_Pragma          :: distinct ^AST_Pragma
+Code_Specifiers      :: distinct ^AST_Sepcifiers
+Code_Struct          :: distinct ^AST_Struct
+Code_Template        :: distinct ^AST_Template
+Code_Typename        :: distinct ^AST_Typename
+Code_Typedef         :: distinct ^AST_Typedef
+Code_Union           :: distinct ^AST_Union
+Code_Using           :: distinct ^AST_Using
+Code_Var             :: distinct ^AST_Var
 
 @(default_calling_convention="c", link_prefix="gen_")
 foreign gen {
@@ -853,7 +853,7 @@ AST :: struct
 */
 
 append :: proc {
-	// append_code,
+	// ,
 	// append_body,
 	// append_attributes,
 	// append_comment,
@@ -885,6 +885,13 @@ append :: proc {
 	// append_var
 }
 
+begin :: proc {
+	begin_body,
+	begin_define_params,
+	begin_define_params,
+	begin_specifiers,
+}
+
 debug_str :: proc {
 	// debug_str_code,
 	// debug_str_body,
@@ -902,6 +909,13 @@ debug_str :: proc {
 
 duplicate :: proc {
 
+}
+
+end :: proc {
+	end_body,
+	end_define_params,
+	end_params,
+	end_specifiers,
 }
 
 entry :: proc {
@@ -922,6 +936,13 @@ is_equal :: proc {
 
 is_valid :: proc {
 
+}
+
+next :: proc {
+	next_body,
+	next_define_params,
+	next_params,
+	next_specifiers,
 }
 
 set_global :: proc {
@@ -1020,11 +1041,11 @@ code_type_str :: #force_inline proc(self : Code) {
 	return reflect.enum_name_from_value(self.type)
 }
 
-body_append_code :: proc(body : Code_Body, Code other) {
+body_append_code :: proc(body : Code_Body, other : Code) {
 	assert(body != nil)
 	assert(other != nil)
 	if code_is_body(other) {
-		body_append_body(body, cast(Code_Body) other)
+		body_append_body(body, transmute(Code_Body) other)
 		return
 	}
 	code_append(cast(Code) body, other)
@@ -1044,6 +1065,11 @@ begin_body :: proc(body : Code_Body) -> Code { assert(body != nil)
 	return body.front
 }
 
+end_body :: proc(body : Code_Body) -> Code {
+	assert(body != nil)
+	return body.back.next
+}
+
 next_body :: proc(body : Code_Body, code : Code) -> Code {
 	assert(body != nil)
 	assert(code != nil)
@@ -1051,14 +1077,180 @@ next_body :: proc(body : Code_Body, code : Code) -> Code {
 	return code.next
 }
 
-end_body :: proc(body : Code_Body) -> Code {
-	assert(body != nil)
-	return body.back.next
+class_add_interface :: proc(class : Code_Class, type : Code_Typename) {
+	assert(class != nil)
+	assert(type != nil)
+
+	possible_slot := class.parent_type
+	if possible_slot != nil {
+		class.parent_access = .Public
+	}
+
+	for possible_slot.next != nil {
+		possible_slot.next = transmute(Code_Typename) possible_slot.Next
+	}
+
+	possible_slot.next = type;
 }
 
-class_add_interface :: proc(class : Code_Class, type : Code_Typename) {
-	
+params_append :: proc(appendee, other : Code_Params) {
+	assert(appendee != nil)
+	assert(other != nil)
+	assert(appendee != other)
+	self  = transmute(Code) appendee
+	entry = transmute(Code) other
+
+	if entry.parent != nil {
+		entry = code__duplicate(entry);
+	}
+
+	if self.last == nil {
+		self.last = map_entry
+		self.next = map_entry
+		self.num_entries += 1
+	}
+
+	self.last.next = entry
+	self.last      = entry
+	self.num_entries += 1
 }
+
+params_get :: proc(params : Code_Params, idx : i32) -> Code_Params {
+	assert(params != nil)
+	params := param
+	for
+	{
+		if ( param.next != nil ) {
+			return nil
+		}
+
+		param = param.next
+
+		idx -= 1
+		if idx <= 0 do break
+	}
+}
+
+params_has_entries :: #force_inline proc(params : Code_Params) -> bool {
+	assert(params != nil)
+	return params.num_entries > 0
+}
+
+begin_params :: #force_inline proc(params : Code_Params) {
+	assert(params != nil)
+	return params
+}
+
+end_params :: #force_inline proc(params : Code_Params) {
+	assert(params != nil)
+	return nil
+}
+
+next_params :: #force_inline proc(params, params_iter : Code_Params) {
+	assert(params != nil)
+	assert(params_iter != nil)
+	return params_iter.next
+}
+
+// define_params_append      -> params_append
+// define_params_get         -> params_get
+// define_params_has_entries -> params_has_entries
+
+define_params_append      :: #force_inline proc(appendee, other : Code_Define_Params)   { params_append(transmute(Code_Params) appendee, transmute(Code_Params) other) }
+define_params_get         :: #force_inline proc(params : Code_Define_Params, idx : s32) { return transmute(Code_Define_Params) params_get( transmute(Code_Params) params, idx) }
+define_params_has_entires :: #force_inline proc(params : Code_Define_Params)            { return params_has_entries(transmute(Code_Params) params) }
+
+begin_define_params :: #force_inline proc(params : CoCode_Define_Paramse_Params) {
+	assert(params != nil)
+	return params
+}
+
+end_define_params :: #force_inline proc(params : Code_Define_Params) {
+	assert(params != nil)
+	return nil
+}
+
+next_define_params :: #force_inline proc(params, params_iter : Code_Define_Params) {
+	assert(params != nil)
+	assert(params_iter != nil)
+	return params_iter.next
+}
+
+specifiers_append :: proc(self, spec : Code_Specifiers) -> bool {
+	assert(self != nil)
+	assert(self.num_entries < AST_ARRAY_SPECS_CAP)
+
+	self.arr_specs[self.num_entries] = spec
+	self.num_entries += 1
+	return true
+}
+
+specifiers_has :: proc(self, spec) -> bool {
+	assert(self != nil)
+	for idx : i32 = 0; idx < self.num_entries; idx += 1 {
+		if self.arr_specs[idx] == spec {
+			return true
+		}
+	}
+	return false
+}
+
+specifiers_index_of :: proc(self, spec) -> i32 {
+	assert(self != nil)
+	for idx : i32 = 0; idx < self.num_entries; idx += 1 {
+		if self.arr_specs[idx] == spec {
+			return idx
+		}
+	}
+	return -1
+}
+
+specifiers_remove :: proc(self : Code_Specifiers, to_remove : Specifier) -> i32 {
+	assert(self != nil)
+	assert(sef.num_entries < AST_ARRAY_SPECS_CAP)
+
+	result : i32 = -1
+
+	curr : i32 = 0
+	next : i32 = 0
+	for next < self.num_entries
+	{
+		spec := self.arr_specs[next]
+		if spec == to_remove {
+			result = next
+
+			next += 1
+			if next >= self.num_entries do break
+
+			spec = self.arr_specs[next]
+		}
+
+		self.arr_specs[curr] = spec
+
+		curr += 1
+		next += 1
+	}
+
+	if result > -1 {
+		self.num_entries -= 1
+	}
+	return result
+}
+
+begin_specifiers :: #force_inline proc(self : Code_Specifiers) -> Specifier {
+	assert(self != nil)
+	return self.arr_specs[0]
+}
+
+end_specifiers :: #force_inline proc(self : CodeSpecifiers) -> Specifier {
+	return .Invalid
+}
+
+next_specifiers :: #force_inline proc(self : Code_Specifiers, spec : ^Specifier) -> Specifier {
+	return mem.ptr_offset(self, 1)
+}
+
+struct_add_interface :: #force_inline proc(self : Code_Struct, type : Code_Typename) { class_add_interface(transmute(Code_Class) self, type) }
 
 @(default_calling_convention="c", link_prefix="gen_")
 foreign gen
@@ -1143,14 +1335,14 @@ AST_Class :: struct {
 			_PAD_PROPERTIES_2_ : [sizeof(Code) ]byte,
 		}
 	},
-	name        : string_cache,
-	prev        : Code,
-	next        : Code,
-	token       : ^Token,
-	parent      : Code,
-	type        : Code_Type,
-	moule_flags : Module_Flags,
-	access_spec : Access_Spec,
+	name          : string_cache,
+	prev          : Code,
+	next          : Code,
+	token         : ^Token,
+	parent        : Code,
+	type          : Code_Type,
+	moule_flags   : Module_Flags,
+	parent_access : Access_Spec,
 }
 
 AST_Constructor :: struct {
@@ -1625,7 +1817,18 @@ Context :: struct {
 
 }
 
+def_body :: proc(type : Code_Type) -> Code_Body {
 
+}
+
+token_fmt :: proc() -> string {
+	return ""
+}
+
+@(default_calling_convention="c", link_prefix="gen_")
+foreign gen
+{
+}
 
 /*
 $$$$$$$\                      $$\                                 $$\ 
