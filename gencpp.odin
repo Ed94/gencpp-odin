@@ -966,35 +966,10 @@ AST :: struct
 
 append :: proc {
 	code_append,
-	// append_body,
-	// append_attributes,
-	// append_comment,
-	// append_class,
-	// append_constructor,
-	// append_define,
-	// append_define_params,
-	// append_destructor,
-	// append_enum,
-	// append_exec,
-	// append_include,
-	// append_friend,
-	// append_fn,
-	// append_module,
-	// append_ns,
-	// append_operator,
-	// append_op_cast,
-	// append_pragma,
-	// append_params,
-	// append_preprocess_cond,
-	// append_specifiers,
-	// append_struct,
-	// append_template,
-	// append_typename,
-	// append_typename,
-	// append_typedef,
-	// append_union,
-	// append_using,
-	// append_var
+	body_append,
+	define_params_append,
+	params_append,
+	specifiers_append,
 }
 
 begin :: proc {
@@ -1006,22 +981,26 @@ begin :: proc {
 
 debug_str :: proc {
 	code_debug_str,
-	// debug_str_code,
-	// debug_str_body,
-	// debug_str_attributes,
-	// debug_str_comment,
-	// debug_str_class,
-	// debug_str_constructor,
-	// debug_str_define,
-	// debug_str_define_params,
-	// debug_str_destructor,
-	// debug_str_enum,
-	// debug_str_exec,
-	// debug_str
+	attributes_debug_str,
+	body_debug_str,
+	comment_debug_str,
+	constructor_debug_str,
+	class_debug_str,
+	define_debug_str,
 }
 
 duplicate :: proc {
 	code__duplicate,
+	attributes_duplicate,
+	body_duplicate,
+	comment_duplicate,
+	constructor_duplicate,
+	class_duplicate,
+	define_duplicate,
+	define_params_duplicate,
+	enum_duplicate,
+	extern_duplicate,
+	exec_duplicate,
 }
 
 end :: proc {
@@ -1033,10 +1012,18 @@ end :: proc {
 
 entry :: proc {
 	code_entry,
+	body_entry,
+	define_params_entry,
+	params_entry,
+	specifiers_entry,
 }
 
 has_entries :: proc {
 	code_has_entries,
+	body_has_entries,
+	define_params_has_entires,
+	params_has_entries,
+	specifiers_has_entries,
 }
 
 is_body :: proc {
@@ -1060,6 +1047,32 @@ next :: proc {
 
 set_global :: proc {
 	code_set_global,
+	attributes_set_global,
+	body_set_globa,
+	comment_set_global,
+	constructor_set_global,
+	class_set_global,
+	define_set_global,
+	define_params_set_global,
+	destructor_set_global,
+	enum_set_global,
+	exec_set_global,
+	extern_set_global,
+	include_set_global,
+	friend_set_global,
+	fn_set_global,
+	module_set_global,
+	namespace_set_global,
+	operator_set_global,
+	opcast_set_global,
+	params_set_global,
+	specifiers_set_global,
+	struct_set_global,
+	template_set_global,
+	typename_set_global,
+	typedef_set_global,
+	union_set_global,
+	var_set_global,
 }
 
 to_strbuilder :: proc {
@@ -1068,8 +1081,8 @@ to_strbuilder :: proc {
 	comment_to_strbuilder,
 	constructor_to_strbuilder,
 	class_to_strbuilder,
-	comment_to_strbuilder,
 	define_to_strbuilder,
+	define_params_to_strbuilder,
 	destructor_to_strbuilder,
 	enum_to_strbuilder,
 	exec_to_strbuilder,
@@ -1096,6 +1109,7 @@ to_string :: proc {
 	body_to_string,
 	class_to_string,
 	comment_to_string,
+	define_to_string,
 	define_params_to_string,
 	destructor_to_string,
 	enum_to_string,
@@ -1123,10 +1137,38 @@ to_string :: proc {
 
 type_str :: proc {
 	code_type_str,
+	attributes_type_str,
+	body_type_str,
+	class_type_str,
+	comment_type_str,
+	define_type_str,
+	define_params_type_str,
+	destructor_type_str,
+	enum_type_str,
+	exec_type_str,
+	extern_type_str,
+	include_type_str,
+	friend_type_str,
+	fn_type_str,
+	module_type_str,
+	namespace_type_str,
+	operator_type_str,
+	opcast_type_str,
+	params_type_str,
+	preproccess_type_str,
+	pragma_type_str,
+	specifiers_type_str,
+	struct_type_str,
+	template_type_str,
+	typename_type_str,
+	typedef_type_str,
+	union_type_str,
+	var_type_str,
 }
 
 validate_body :: proc {
 	code__validate_body,
+	body_validate_body,
 }
 
 attributes_to_string    :: #force_inline proc(attributes  : Code_Attributes)      -> Str_Builder { return strbuilder_to_string( attributes_to_strbuilder(attributes)) }
@@ -1221,19 +1263,28 @@ exec_to_strbuilder_ref :: proc(code : Code_Exec, result : ^Str_Builder) {
 }
 
 extern_to_strbuilder :: proc(extern : Code_Extern, result : ^Str_Builder) {
-
+	if extern.body {
+		strbuilder_append_fmt(result, "extern \"%S\"\n{\n%SB\n}\n", extern.name, body_to_strbuilder(self.body))
+	}
+	else {
+		strbuilder_append_fmt(result, "extern \"%S\"\n{}\n", extern.name)
+	}
 }
 
 include_to_strbuilder :: proc(include : Code_Include) -> Str_Builder {
-	return { nil }
+	assert(include != nil)
+	return strbuilder_fmt_buf(_ctx.allocator_temp, "#include %S\n", include.content)
 }
 
 include_to_strbuilder_ref :: proc(include : Code_Include, result : ^Str_Builder) {
-
+	assert(include != nil)
+	assert(result != nil)
+	strbuilder_append_fmt(result, "#include %S\n")
 }
 
 friend_to_strbuilder :: proc(friend : Code_Friend) -> Str_Builder {
-	return { nil }
+	result := strbuilder_make_reserve(ctx.allocator_temp, 256)
+	friend_to_strbuilder_ref(friend, result)
 }
 
 friend_to_strbuilder_ref :: proc(friend : Code_Friend, result : ^Str_Builder) {
