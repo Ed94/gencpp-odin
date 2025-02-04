@@ -690,16 +690,13 @@ Macro_Flag :: enum(u16)
 	Functional,   // Macro has parameters (args expected to be passed)
 	Expects_Body, // Expects to assign a braced scope to its body.
 
-	// lex__eat wil treat this macro as an identifier if the parser attempts to consume it as one.
-	//  ^^^ This is a kludge because we don't support push/pop macro pragmas rn.
-	Allow_As_Identifier,
+	Allow_As_Identifier, // lex__eat wil treat this macro as an identifier if the parser attempts to consume it as one.
 
-	// lex__eat wil treat this macro as an attribute if the parser attempts to consume it as one.
+	Allow_As_Attribute, // lex__eat wil treat this macro as an attribute if the parser attempts to consume it as one.
 	//  ^^^ This a kludge because unreal has a macro that behaves as both a 'statement' and an attribute (UE_DEPRECATED, PRAGMA_ENABLE_DEPRECATION_WARNINGS, etc)
 	// TODO(Ed): We can keep the MF_Allow_As_Attribute flag for macros, however, we need to add the ability of AST_Attributes to chain themselves.
 	// Its thats already a thing in the standard language anyway
 	// & it would allow UE_DEPRECATED, (UE_PROPERTY / UE_FUNCTION) to chain themselves as attributes of a resolved member function/variable definition
-	Allow_As_Attribute,
 
 	// When a macro is encountered after attributes and specifiers while parsing a function, or variable:
 	// It will consume the macro and treat it as resolving the definition. (Yes this is for Unreal Engine)
@@ -708,7 +705,7 @@ Macro_Flag :: enum(u16)
 
 	Allow_As_Specifier, // Created for Unreal's PURE_VIRTUAL
 
-	Null = 0,
+	None = 0,
 };
 Macro_Flags :: bit_set[Macro_Flag; u16]
 
@@ -854,7 +851,6 @@ AST :: struct
 
 append :: proc {
 	code_append,
-	code_debug_str,
 	// append_body,
 	// append_attributes,
 	// append_comment,
@@ -894,6 +890,7 @@ begin :: proc {
 }
 
 debug_str :: proc {
+	code_debug_str,
 	// debug_str_code,
 	// debug_str_body,
 	// debug_str_attributes,
@@ -909,7 +906,7 @@ debug_str :: proc {
 }
 
 duplicate :: proc {
-
+	code__duplicate,
 }
 
 end :: proc {
@@ -920,11 +917,11 @@ end :: proc {
 }
 
 entry :: proc {
-
+	code_entry,
 }
 
 has_entries :: proc {
-
+	code_has_entries,
 }
 
 is_body :: proc {
@@ -932,11 +929,11 @@ is_body :: proc {
 }
 
 is_equal :: proc {
-
+	code__is_equal,
 }
 
 is_valid :: proc {
-
+	code_is_valid,
 }
 
 next :: proc {
@@ -947,7 +944,7 @@ next :: proc {
 }
 
 set_global :: proc {
-
+	code_set_global,
 }
 
 to_strbuilder :: proc {
@@ -961,11 +958,11 @@ to_strbuilder_ref :: proc {
 }
 
 type_str :: proc {
-
+	code_type_str,
 }
 
 validate_body :: proc {
-
+	code__validate_body,
 }
 
 attributes_to_strbuilder :: #force_inlin proc(attributes : Code_Attributes) -> Str_Builder {
@@ -1007,8 +1004,9 @@ code_append :: proc(self, other : Code) {
 	assert(self != nil)
 	assert(other != nil)
 	assert(self != other)
-	if (other.parent != nil)
-		other = gen.code__duplicate(other)
+	if (other.parent != nil) {
+		other = code_duplicate(other)
+	}
 
 	other.parent = self
 
@@ -1296,10 +1294,11 @@ code_to_strbuilder :: gen.code__to_strbuilder
 @(default_calling_convention="c", link_prefix="gen_")
 foreign gen
 {
-	code__debug_str     :: proc(code        : Code) -> string ---
-	code__duplicate     :: proc(code        : Code) -> Code ---
-	code__is_equal      :: proc(code        : Code) -> bool ---
-	code__to_strbuilder :: proc(code        : Code) -> strbuilder ---
+	code__debug_str     :: proc(code : Code) -> string ---
+	code__duplicate     :: proc(code : Code) -> Code ---
+	code__is_equal      :: proc(code : Code) -> bool ---
+	code__to_strbuilder :: proc(code : Code) -> strbuilder ---
+	code__validate_body :: proc(code : Code) -> bool ---
 
 	body_to_strbuilder        :: proc(body : Code_Body) -> StrBuilder ---
 	body_to_strbuilder_ref    :: proc(body : Code_Body, builder : ^Str_Builder) ---
@@ -1950,18 +1949,71 @@ Opts_Def_Struct :: struct {
 	body           : Code_Body,
 	parent         : Code_Typename,
 	parent_access  : Access_Spec,
-	attributes     : Attributes,
+	attributes     : Code_Attributes,
 	interfaces     : Code_Typename,
 	num_interfaces : i32,
 	specifiers     : Code_Specifiers,
 	mflags         : Module_Flags,
 }
 
+def_class :: #force_inline proc(name : string, 
+	body           : Code_Body       = nil
+	parent         : Code_Typename   = nil,
+	parent_access  : Access_Spec     = .Default
+	attributes     : Code_Attributes = nil
+	interface      : []Code_Typename = nil
+	specifiers     : Code_Specifiers = nil,
+	mflags         : Module_Flags    = .None,
+) -> Code_Class
+{
+	opts := Opts_Def_Struct {
+		body,
+		parent,
+		parent_access,
+		attributes,
+		raw_data(interfaces),
+		len(interface),
+		specifiers,
+		mflags
+	}
+	return gen.def__class(name, opts)
+}
+
+def_struct :: #force_inline proc(name : string, 
+	body           : Code_Body       = nil
+	parent         : Code_Typename   = nil,
+	parent_access  : Access_Spec     = .Default
+	attributes     : Code_Attributes = nil
+	interface      : []Code_Typename = nil
+	specifiers     : Code_Specifiers = nil,
+	mflags         : Module_Flags    = .None,
+) -> Code_Struct
+{
+	opts := Opts_Def_Struct {
+		body,
+		parent,
+		parent_access,
+		attributes,
+		raw_data(interfaces),
+		len(interface),
+		specifiers,
+		mflags
+	}
+	return gen.def__struct(name, opts)
+}
+
 Opts_Def_Constructor :: struct {
 	params           : Code_Params,
 	initializer_list : Code,
-	body             : body,
+	body             : Code_Body,
 }
+
+def_constructor :: #force_inline proc(params : Code_Params = nil, initializer_list : Code = nil, body : Code_Body = nil) -> Code_Constructor {
+	opts := Opts_Def_Constructor {
+		params, initializer_list, body
+	}
+	return gen.def__constructor(opts)
+} 
 
 Opts_Def_Define :: struct {
 	params  : Code_Define_Params,
@@ -1970,9 +2022,33 @@ Opts_Def_Define :: struct {
 	dont_register_to_preprocess_macros : b32,
 }
 
+def_define :: #force_inline proc(name : string, type : Macro_Type
+	params  : Code_Define_Params = nil,
+	content : string = "",
+	flags   : Macro_Flags = 0
+	dont_register_to_preprocess_macros : b32 = false
+) -> Code_Define
+{
+	opts := Opts_Def_Define {
+		params, 
+		content, 
+		flags, 
+		dont_register_to_preprocess_macros
+	}
+	return def__define(name, opts)
+}
+
 Opts_Def_Destructor :: struct {
 	body       : Code,
 	specifiers : Code_Specifiers,
+}
+
+def_destructor :: #force_inline proc(body : Code = nil, specifiers : Code_Specifiers = nil) -> Code_Destructor {
+	opts := Opts_Def_Destructor {
+		body,
+		specifiers
+	}
+	return def__destructor(opts)
 }
 
 Opts_Def_Enum :: struct {
@@ -2070,25 +2146,25 @@ foreign gen
 	def_specifier       :: proc() ---
 	def_using_namespace :: proc(name : string) -> Code_Using ---
 
-	def__class          :: proc(name : string,                           opts : Opts_Def_Struct)        -> Code_Class ---
-	def__constructor    :: proc(                                         opts : Opts_Def_Constructor)   -> Code_Constructor ---
-	def__define         :: proc(name : string, type : Macro_Type,        opts : Opts_Def_Define)        -> Code_Define ---
-	def__destructor     :: proc(                                         opts : Opts_Def_Destructor)    -> Code_Destructor ---
-	def__enum           :: proc(name : string,                           opts : Opts_Def_Enum)          -> Code_Enum ---
-	def__function       :: proc(name : string,                           opts : Opts_Def_Function)      -> Code_Fn ---
-	def__include        :: proc(content : string,                        opts : Opts_Def_Include)       -> Code_Include ---
-	def__module         :: proc(name : string,                           opts : Opts_Def_Module)        -> Code_Module ---
-	def__namespace      :: proc(name : string, body : CodeBody,          opts : Opts_Def_Namespace)     -> Code_NS ---
-	def__operator       :: proc(op : Operator, nspace : string,          opts : Opts_Def_Operator)      -> Code_Operator ---
-	def__operator_cast  :: proc(type : Code_Typename,                    opts : Opts_Def_Operator_Cast) -> Code_Op_Cast ---
-	def__param          :: proc(type : Code_Typename, name : string,     opts : Opts_Def_Param)         -> Code_Params ---
-	def__struct         :: proc(name : string,                           opts : Opts_Def_Struct)        -> Code_Struct ---
-	def__template       :: proc(params : Code_Params, definition : Code, opts : Opts_Def_Template)      -> Code_Template ---
-	def__type           :: proc(name : string,                           opts : Opts_Def_Type)          -> Code_Typename ---
-	def__typedef        :: proc(name : string, type : Code,              opts : Opts_Def_Typedef)       -> Code_Typedef ---
-	def__using          :: proc(name : string, type : Code_Typename,     opts : Opts_Def_Using)         -> Code_Using ---
-	def__union          :: proc(name : string, body : Code_Body,         opts : Opts_Def_Union)         -> Code_Union ---
-	def__variable       :: proc(type : Code_Typename, name : string,     opts : Opts_Def_Variable)      -> Code_Var ---
+	def__class         :: proc(name : string,                           opts : Opts_Def_Struct)        -> Code_Class ---
+	def__constructor   :: proc(                                         opts : Opts_Def_Constructor)   -> Code_Constructor ---
+	def__define        :: proc(name : string, type : Macro_Type,        opts : Opts_Def_Define)        -> Code_Define ---
+	def__destructor    :: proc(                                         opts : Opts_Def_Destructor)    -> Code_Destructor ---
+	def__enum          :: proc(name : string,                           opts : Opts_Def_Enum)          -> Code_Enum ---
+	def__function      :: proc(name : string,                           opts : Opts_Def_Function)      -> Code_Fn ---
+	def__include       :: proc(content : string,                        opts : Opts_Def_Include)       -> Code_Include ---
+	def__module        :: proc(name : string,                           opts : Opts_Def_Module)        -> Code_Module ---
+	def__namespace     :: proc(name : string, body : CodeBody,          opts : Opts_Def_Namespace)     -> Code_NS ---
+	def__operator      :: proc(op : Operator, nspace : string,          opts : Opts_Def_Operator)      -> Code_Operator ---
+	def__operator_cast :: proc(type : Code_Typename,                    opts : Opts_Def_Operator_Cast) -> Code_Op_Cast ---
+	def__param         :: proc(type : Code_Typename, name : string,     opts : Opts_Def_Param)         -> Code_Params ---
+	def__struct        :: proc(name : string,                           opts : Opts_Def_Struct)        -> Code_Struct ---
+	def__template      :: proc(params : Code_Params, definition : Code, opts : Opts_Def_Template)      -> Code_Template ---
+	def__type          :: proc(name : string,                           opts : Opts_Def_Type)          -> Code_Typename ---
+	def__typedef       :: proc(name : string, type : Code,              opts : Opts_Def_Typedef)       -> Code_Typedef ---
+	def__using         :: proc(name : string, type : Code_Typename,     opts : Opts_Def_Using)         -> Code_Using ---
+	def__union         :: proc(name : string, body : Code_Body,         opts : Opts_Def_Union)         -> Code_Union ---
+	def__variable      :: proc(type : Code_Typename, name : string,     opts : Opts_Def_Variable)      -> Code_Var ---
 
 	def_class_body_arr       :: proc(num : i32, codes : ^Code) -> Code_Body ---
 	def_define_params_arr    :: proc(num : i32, codes : ^Code) -> Code_Body ---
@@ -2180,13 +2256,14 @@ odin_allocator_proc_wrapper :: proc(
 {
 	info := transmute(mem.Allocator) allocator_data
 	memory, error := info.procedure(info.data, type, size, alignment, old_memory, old_size)
+	assert(error == .None)
 	return raw_data(memory)
 }
 
 allocator_from_odin_allocator :: #force_inline proc(allocator : ^mem.Allocator) -> Allocator_Info {
 	result := Allocator_Info { 
 		odin_allocator_proc_wrapper,
-		raw_data(allocator)
+		transmute(rawptr) allocator
 	}
 	return result
 }
@@ -2199,7 +2276,7 @@ Arena :: struct {
 	temp_count : int,
 }
 
-Pool : struct {
+Pool :: struct {
 	backing     : Allocator_Info,
 	mem_start   : rawptr,
 	free_list   : rawptr,
