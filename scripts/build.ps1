@@ -57,9 +57,11 @@ if ( $cannot_build ) {
 . $incremental_checks
 
 #region Building
-$path_build   = Join-Path $path_root 'build'
-$path_gencpp  = join-Path $path_root 'gencpp'
-$path_scripts = Join-Path $path_root 'scripts'
+$path_build         = Join-Path $path_root   'build'
+$path_examples      = join-path $path_root   'examples'
+$path_gencpp        = join-Path $path_root   'gencpp'
+$path_gencpp_source = join-Path $path_gencpp 'source'
+$path_scripts       = Join-Path $path_root   'scripts'
 
 verify-path $path_build
 
@@ -89,12 +91,12 @@ if ( $lib )
 
 	. $vendor_toolchain
 
-	$path_lib = join-path $path_gencpp 'lib/win32'
+	$path_lib = join-path $path_gencpp 'lib/win64'
 	verify-path $path_lib
 
 	$includes = @( $path_gencpp )
-	$unit     = join-path $path_gencpp "gencpp_c11.c"
-	$path_lib = join-path $path_lib    "gencpp_c11.lib"
+	$unit     = join-path $path_gencpp_source "gencpp_c11.c"
+	$path_lib = join-path $path_lib           "gencpp_c11.lib"
 
 	$compiler_args = @()
 	$compiler_args += $flag_all_c
@@ -111,15 +113,16 @@ if ( $examples )
 	. $odin_compiler_defs
 
 	write-host "Building gencpp-odin examples"
-	$executable = join-path $path_build 'sokol_demo.exe'
-	$pdb        = join-path $path_build 'sokol_demo.pdb'
+	$executable = join-path $path_build 'hellope_gencpp.exe'
+	$pdb        = join-path $path_build 'hellope_gencpp.pdb'
+
+	$path_file  = join-path $path_examples 'hellope_gencpp.odin'
 
 	$build_args = @()
 	$build_args += $command_build
-	$build_args += './hellope_gencpp'
+	$build_args += $path_file
+	$build_args += $flag_file_package
 	$build_args += $flag_output_path + $executable
-	$build_args += ($flag_collection + $pkg_collection_backend)
-	$build_args += ($flag_collection + $pkg_collection_thirdparty)
 	# $build_args += $flag_micro_architecture_native
 	$build_args += $flag_use_separate_modules
 	$build_args += $flag_thread_count + $CoreCount_Physical

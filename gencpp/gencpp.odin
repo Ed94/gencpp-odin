@@ -28,6 +28,16 @@ import   "core:mem"
 import   "core:reflect"
 import   "core:runtime"
 
+when ODIN_OS == .Windows {
+	foreign import gencpp_c11 "./gencpp/lib/win64/gencpp_c11.lib"
+}
+else when ODIN_OS == .Linux {
+	// TODO(Ed): Get linux working
+}
+else when ODIN_OS == .Darwin {
+	// TODO(Ed): Get Mac working
+}
+
 // Eventually gencpp will support execution statements and expressions
 // For now it does not.
 EXECUTION_SUPPORT :: false
@@ -912,7 +922,7 @@ AST :: struct
 				body          : Code,  // Class, Constructor, Define, Destructor, Enum, Friend, Function, Namespace, Struct, Union
 				delcaration   : Code,  // Friend, Template
 				value         : Code,  // Parameter, Variable
-			}
+			},
 			using _ : struct #raw_union {
 				next_var        : Code, // Variable
 				suffix_specs    : Code, // Typename, Function (Thanks Unreal)
@@ -1361,7 +1371,7 @@ body_to_stringbuilder_ref :: proc(body : Code_Body, result : ^Str_Builder) {
 	}
 }
 
-comment_to_strbuilder :: #force_inlin proc(comment : Code_Attributes) -> Str_Builder {
+comment_to_strbuilder :: #force_inline proc(comment : Code_Attributes) -> Str_Builder {
 	assert(attributes != nil)
 	dupe := strbuilder_make_str(get_context().temp_allocator, comment.content)
 	return dupe

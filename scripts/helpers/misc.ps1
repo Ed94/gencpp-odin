@@ -38,6 +38,18 @@ function Get-ScriptRepoRoot {
     throw "Unable to find repository root"
 }
 
+function Invoke-WithColorCodedOutput { param( [scriptblock] $command )
+	& $command 2>&1 | ForEach-Object {
+		# Write-Host "Type: $($_.GetType().FullName)" # Add this line for debugging
+		$color = 'White' # Default text color
+		switch ($_) {
+			{ $_ -imatch "error" } { $color = 'Red'; break }
+			{ $_ -imatch "warning" } { $color = 'Yellow'; break }
+		}
+		Write-Host "`t$_" -ForegroundColor $color
+	}
+}
+
 function verify-path { param( $path )
 	if (test-path $path) {return $true}
 
