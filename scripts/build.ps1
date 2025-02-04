@@ -89,8 +89,8 @@ if ( $lib )
 
 	. $vendor_toolchain
 
-	$path_bin = join-path $path_gencpp bin
-	verify-path $path_build
+	$path_bin = join-path $path_gencpp 'bin/win32'
+	verify-path $path_bin
 
 	$includes = @( $path_gencpp )
 	$unit     = join-path $path_gencpp "gencpp_c11.c"
