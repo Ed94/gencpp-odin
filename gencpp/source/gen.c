@@ -13819,7 +13819,7 @@ gen_Code gen_scan_file(char const* path)
 	gen_file_read(&file, str, fsize);
 	gen_strbuilder_get_header(str)->Length = fsize;
 
-	// Skip GEN_INTELLISENSE_DIRECTIVES preprocessor blocks
+	// Skip INTELLISENSE_DIRECTIVES preprocessor blocks
 	// Its designed so that the directive should be the first thing in the file.
 	// Anything that comes before it will also be omitted.
 	{
@@ -13833,7 +13833,7 @@ gen_Code gen_scan_file(char const* path)
 	} while (0)
 		const gen_Str directive_start      = txt("ifdef");
 		const gen_Str directive_end        = txt("endif");
-		const gen_Str gen_def_intellisense = txt("GEN_INTELLISENSE_DIRECTIVES");
+		const gen_Str gen_def_intellisense = txt("INTELLISENSE_DIRECTIVES");
 
 		bool        found_directive        = false;
 		char const* scanner                = (char const*)str;

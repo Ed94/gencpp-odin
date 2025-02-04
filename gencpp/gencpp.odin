@@ -21,12 +21,13 @@
 
 package gencpp
 
-import   "base:runtime"
-import c "core:c"
-import   "core:c/libc"
-import   "core:fmt"
-import   "core:mem"
-import   "core:reflect"
+import    "base:runtime"
+import c  "core:c"
+import    "core:c/libc"
+import    "core:fmt"
+import    "core:mem"
+import    "core:reflect"
+import os "core:os/os2"
 
 when ODIN_OS == .Windows {
 	foreign import gencpp_c11 "./gencpp/lib/win64/gencpp_c11.lib"
@@ -235,12 +236,13 @@ codetype_to_keyword_str :: proc "contextless" (type : Code_Type) -> string
 		case .Template:                             return "template"
 		case .Typedef:                              return "typedef"
 		case .Typename:                             return "__NA__"
-		case .Union, .Union_Fwd:                    return Union
+		case .Union, .Union_Fwd:                    return "union"
 		case .Union_Body:                           return "__NA__"
 		case .Using:                                return "using"
 		case .Using_Namespace:                      return "using namespace"
 		case .Variable:                             return "__NA__"
 	}
+	return ""
 }
 
 Operator :: enum(u32)
@@ -415,8 +417,8 @@ spec_to_str :: proc "contextless" (spec : Specifier) -> string
 
 spec_is_trailing :: proc "contextless" (spec : Specifier) -> bool
 {
-	switch spec {
-		case Const, Final, NoExceptions, Override, Pure, Delete, Volatile: return true
+	#partial switch spec {
+		case .Const, .Final, .NoExceptions, .Override, .Pure, .Delete, .Volatile: return true
 	}
 	return false;
 }
@@ -504,7 +506,7 @@ Token_Type :: enum(u32)
 	Spec_Virtual,
 	Star,
 	Statement_End,
-	StaticAssert,
+	Static_Assert,
 	String,
 	Type_Typename,
 	Type_Unsigned,
@@ -655,7 +657,7 @@ Token :: struct {
 	flags  : Token_Flag,
 }
 
-tok_to_access_specifier :: #force_inline proc "contextless" (tok : Token) -> Access_Spec { return cast(AccessSpec) tok.Type }
+tok_to_access_specifier :: #force_inline proc "contextless" (tok : Token) -> Access_Spec { return cast(Access_Spec) tok.type }
 tok_is_valid            :: #force_inline proc "contextless" (tok : Token) -> bool        { return tok.text != "" && len(tok.text) > 0 && tok.Type != .Invalid }
 tok_is_access_specifier :: #force_inline proc "contextless" (tok : Token) -> bool        { return .Access_Operator in tok.flags }
 tok_is_attribute        :: #force_inline proc "contextless" (tok : Token) -> bool        { return .Attribute       in tok.flags }
@@ -1588,6 +1590,7 @@ var_to_strbuilder :: proc(var : Code_Var) -> Str_Builder {
 }
 
 to_string :: proc {
+	code_to_string,
 	attributes_to_string,
 	body_to_string,
 	class_to_string,
@@ -1618,34 +1621,35 @@ to_string :: proc {
 	strbuilder_to_string,
 }
 
-attributes_to_string    :: #force_inline proc(attributes  : Code_Attributes)      -> Str_Builder { return strbuilder_to_string( attributes_to_strbuilder(attributes)) }
-body_to_string          :: #force_inline proc(body        : Code_Body)            -> Str_Builder { return strbuilder_to_string( body_to_strbuilder(body)) }
-comment_to_string       :: #force_inline proc(comment     : Code_Comment)         -> Str_Builder { return strbuilder_to_string( comment_to_strbuilder(comment)) }
-constructor_to_string   :: #force_inline proc(constructor : Code_Constructor)     -> Str_Builder { return strbuilder_to_string( constructor_to_strbuilder(constructor)) }
-class_to_string         :: #force_inline proc(class       : Code_Class)           -> Str_Builder { return strbuilder_to_string( class_to_strbuilder(class)) }
-define_to_string        :: #force_inline proc(define      : Code_Define)          -> Str_Builder { return strbuilder_to_string( define_to_strbuilder(define)) }
-define_params_to_string :: #force_inline proc(params      : Code_DefineParams)    -> Str_Builder { return strbuilder_to_string( define_params_to_strbuilder(params)) }
-destructor_to_string    :: #force_inline proc(destructor  : Code_Destructor)      -> Str_Builder { return strbuilder_to_string( destructor_to_strbuilder(destructor)) }
-enum_to_string          :: #force_inline proc(code        : Code_Enum)            -> Str_Builder { return strbuilder_to_string( enum_to_string(code)) }
-exec_to_string          :: #force_inline proc(exec        : Code_Exec)            -> Str_Builder { return strbuilder_to_string( exec_to_strbuilder(exec)) }
-extern_to_string        :: #force_inline proc(extern      : Code_Extern)          -> Str_Builder { return strbuilder_to_string( extern_to_strbuilder(extern)) }
-include_to_string       :: #force_inline proc(include     : Code_Include)         -> Str_Builder { return strbuilder_to_string( include_to_strbuilder(include)) }
-friend_to_string        :: #force_inline proc(friend      : Code_Friend)          -> Str_Builder { return strbuilder_to_string( friend_to_strbuilder(friend)) }
-fn_to_string            :: #force_inline proc(fn          : Code_Fn)              -> Str_Builder { return strbuilder_to_string( fn_to_strbuilder(fn)) }
-module_to_string        :: #force_inline proc(module      : Code_Module)          -> Str_Builder { return strbuilder_to_string( module_to_strbuilder(module)) }
-namespace_to_string     :: #force_inline proc(namespace   : Code_NS)              -> Str_Builder { return strbuilder_to_string( namespace_to_strbuilder(namespace)) }
-operator_to_string      :: #force_inline proc(operator    : Code_Operator)        -> Str_Builder { return strbuilder_to_string( operator_to_strbuilder(operator)) }
-opcast_to_string        :: #force_inline proc(opcast      : Code_OpCast)          -> Str_Builder { return strbuilder_to_string( opcast_to_strbuilder(opcast)) }
-params_to_string        :: #force_inline proc(params      : Code_Params)          -> Str_Builder { return strbuilder_to_string( params_to_strbuilder(params)) }
-preprocess_to_string    :: #force_inline proc(cond        : Code_Preprocess_Cond) -> Str_Builder { return strbuilder_to_string( preprocess_to_strbuilder(cond)) }
-pragma_to_string        :: #force_inline proc(pragma      : Code_Pragma)          -> Str_Builder { return strbuilder_to_string( pragma_to_strbuilder(pragma)) }
-specifiers_to_string    :: #force_inline proc(specifiers  : Code_Specifiers)      -> Str_Builder { return strbuilder_to_string( specifiers_to_strbuilder(specifiers)) }
-struct_to_string        :: #force_inline proc(code        : Code_Struct)          -> Str_Builder { return strbuilder_to_string( struct_to_string(code)) }
-template_to_string      :: #force_inline proc(template    : Code_Template)        -> Str_Builder { return strbuilder_to_string( template_to_strbuilder(template)) }
-typename_to_string      :: #force_inline proc(typename    : Code_Typename)        -> Str_Builder { return strbuilder_to_string( typename_to_String(typename)) }
-typedef_to_string       :: #force_inline proc(typedef     : Code_Typedef)         -> Str_Builder { return strbuilder_to_string( typedef_to_strbuilder(typedef)) }
-union_to_string         :: #force_inline proc(code        : Code_Union)           -> Str_Builder { return strbuilder_to_string( union_to_strbuilder(code)) }
-var_to_string           :: #force_inline proc(var         : Code_Var)             -> Str_Builder { return strbuilder_to_string( var_to_strbuilder(var)) }
+code_to_string          :: #force_inline proc(code        : Code)                 -> string { return strbuilder_to_string( code_to_strbuilder(code)) }
+attributes_to_string    :: #force_inline proc(attributes  : Code_Attributes)      -> string { return strbuilder_to_string( attributes_to_strbuilder(attributes)) }
+body_to_string          :: #force_inline proc(body        : Code_Body)            -> string { return strbuilder_to_string( body_to_strbuilder(body)) }
+comment_to_string       :: #force_inline proc(comment     : Code_Comment)         -> string { return strbuilder_to_string( comment_to_strbuilder(comment)) }
+constructor_to_string   :: #force_inline proc(constructor : Code_Constructor)     -> string { return strbuilder_to_string( constructor_to_strbuilder(constructor)) }
+class_to_string         :: #force_inline proc(class       : Code_Class)           -> string { return strbuilder_to_string( class_to_strbuilder(class)) }
+define_to_string        :: #force_inline proc(define      : Code_Define)          -> string { return strbuilder_to_string( define_to_strbuilder(define)) }
+define_params_to_string :: #force_inline proc(params      : Code_DefineParams)    -> string { return strbuilder_to_string( define_params_to_strbuilder(params)) }
+destructor_to_string    :: #force_inline proc(destructor  : Code_Destructor)      -> string { return strbuilder_to_string( destructor_to_strbuilder(destructor)) }
+enum_to_string          :: #force_inline proc(code        : Code_Enum)            -> string { return strbuilder_to_string( enum_to_string(code)) }
+exec_to_string          :: #force_inline proc(exec        : Code_Exec)            -> string { return strbuilder_to_string( exec_to_strbuilder(exec)) }
+extern_to_string        :: #force_inline proc(extern      : Code_Extern)          -> string { return strbuilder_to_string( extern_to_strbuilder(extern)) }
+include_to_string       :: #force_inline proc(include     : Code_Include)         -> string { return strbuilder_to_string( include_to_strbuilder(include)) }
+friend_to_string        :: #force_inline proc(friend      : Code_Friend)          -> string { return strbuilder_to_string( friend_to_strbuilder(friend)) }
+fn_to_string            :: #force_inline proc(fn          : Code_Fn)              -> string { return strbuilder_to_string( fn_to_strbuilder(fn)) }
+module_to_string        :: #force_inline proc(module      : Code_Module)          -> string { return strbuilder_to_string( module_to_strbuilder(module)) }
+namespace_to_string     :: #force_inline proc(namespace   : Code_NS)              -> string { return strbuilder_to_string( namespace_to_strbuilder(namespace)) }
+operator_to_string      :: #force_inline proc(operator    : Code_Operator)        -> string { return strbuilder_to_string( operator_to_strbuilder(operator)) }
+opcast_to_string        :: #force_inline proc(opcast      : Code_OpCast)          -> string { return strbuilder_to_string( opcast_to_strbuilder(opcast)) }
+params_to_string        :: #force_inline proc(params      : Code_Params)          -> string { return strbuilder_to_string( params_to_strbuilder(params)) }
+preprocess_to_string    :: #force_inline proc(cond        : Code_Preprocess_Cond) -> string { return strbuilder_to_string( preprocess_to_strbuilder(cond)) }
+pragma_to_string        :: #force_inline proc(pragma      : Code_Pragma)          -> string { return strbuilder_to_string( pragma_to_strbuilder(pragma)) }
+specifiers_to_string    :: #force_inline proc(specifiers  : Code_Specifiers)      -> string { return strbuilder_to_string( specifiers_to_strbuilder(specifiers)) }
+struct_to_string        :: #force_inline proc(code        : Code_Struct)          -> string { return strbuilder_to_string( struct_to_string(code)) }
+template_to_string      :: #force_inline proc(template    : Code_Template)        -> string { return strbuilder_to_string( template_to_strbuilder(template)) }
+typename_to_string      :: #force_inline proc(typename    : Code_Typename)        -> string { return strbuilder_to_string( typename_to_String(typename)) }
+typedef_to_string       :: #force_inline proc(typedef     : Code_Typedef)         -> string { return strbuilder_to_string( typedef_to_strbuilder(typedef)) }
+union_to_string         :: #force_inline proc(code        : Code_Union)           -> string { return strbuilder_to_string( union_to_strbuilder(code)) }
+var_to_string           :: #force_inline proc(var         : Code_Var)             -> string { return strbuilder_to_string( var_to_strbuilder(var)) }
 
 type_str :: proc {
 	code_type_str,
@@ -1820,7 +1824,7 @@ end_body :: proc(body : Code_Body) -> Code {
 next_body :: proc(body : Code_Body, code : Code) -> Code {
 	assert(body != nil)
 	assert(code != nil)
-	assert(code.parent == body)
+	assert(code.parent != (transmute(Code) body))
 	return code.next
 }
 
@@ -2617,6 +2621,8 @@ AST_Var :: struct {
 			attributes : Code_Attributes,
 			specs      : Code_Specifiers,
 			value_type : Code_Typename,
+			value      : Code,
+			next_var   : Code_Var,
 		},
 	},
 	name                    : string_cached,
@@ -3211,6 +3217,129 @@ foreign gencpp_c11
 //#endregion("General Interface")
 
 /*
+  ______                    __ __ __                            
+ /      \                  |  \  \  \                           
+|  ▓▓▓▓▓▓\__    __ __    __ \▓▓ ▓▓\▓▓ ______   ______  __    __ 
+| ▓▓__| ▓▓  \  |  \  \  /  \  \ ▓▓  \|      \ /      \|  \  |  \
+| ▓▓    ▓▓ ▓▓  | ▓▓\▓▓\/  ▓▓ ▓▓ ▓▓ ▓▓ \▓▓▓▓▓▓\  ▓▓▓▓▓▓\ ▓▓  | ▓▓
+| ▓▓▓▓▓▓▓▓ ▓▓  | ▓▓ >▓▓  ▓▓| ▓▓ ▓▓ ▓▓/      ▓▓ ▓▓   \▓▓ ▓▓  | ▓▓
+| ▓▓  | ▓▓ ▓▓__/ ▓▓/  ▓▓▓▓\| ▓▓ ▓▓ ▓▓  ▓▓▓▓▓▓▓ ▓▓     | ▓▓__/ ▓▓
+| ▓▓  | ▓▓\▓▓    ▓▓  ▓▓ \▓▓\ ▓▓ ▓▓ ▓▓\▓▓    ▓▓ ▓▓      \▓▓    ▓▓
+ \▓▓   \▓▓ \▓▓▓▓▓▓ \▓▓   \▓▓\▓▓\▓▓\▓▓ \▓▓▓▓▓▓▓\▓▓      _\▓▓▓▓▓▓▓
+                                                      |  \__| ▓▓
+                                                       \▓▓    ▓▓
+                                                        \▓▓▓▓▓▓ 
+*/
+//#region("Auxiliary")
+
+Builder :: struct {
+	file   : ^os.File,
+	buffer : Str_Builder,
+}
+
+builder_open :: proc(path : string) -> (Builder, os.Error) {
+	file, error := os.open(path, flags = {.Write, .Create})
+	if error != .None {
+		return {}, error
+	}
+
+	buffer := strbuilder_make_reserve(_ctx.allocator_temp, cast(int) _ctx.init_size_builder_buffer)
+	result := Builder {
+		file,
+		buffer
+	}
+	return result, error
+}
+
+builder_pad_lines :: proc(builder : ^Builder, num : i32) {
+	for _ in 0 ..< num {
+		strbuilder_append_string(builder, '\n')
+	}
+}
+
+builder_print :: proc {
+	builder_print_fmt,
+	builder_print_code,
+	builder_print_attributes,
+	builder_print_body,
+	builder_print_comment,
+	builder_print_constructor,
+	builder_print_class,
+	builder_print_define,
+	builder_print_define_params,
+	builder_print_enum,
+	builder_print_exec,
+	builder_print_extern,
+	builder_print_include,
+	builder_print_friend,
+	builder_print_fn,
+	builder_print_module,
+	builder_print_namespace,
+	builder_print_operator,
+	builder_print_opcast,
+	builder_print_params,
+	builder_print_specifiers,
+	builder_print_struct,
+	builder_print_template,
+	builder_print_typename,
+	builder_print_typedef,
+	builder_print_union,
+	builder_print_var,
+}
+
+builder_print_fmt           :: #force_inline proc(builder : ^Builder, fmt  : string, args : ..any ) { strbuilder_append_fmt_buf(& builder.buffer, fmt, ..args ) }
+builder_print_code          :: #force_inline proc(builder : ^Builder, code : Code)                  { strbulider_append_string(& builder.buffer, to_string(code)) }
+builder_print_attributes    :: #force_inline proc(builder : ^Builder, code : Code_Attributes)       { strbulider_append_string(& builder.buffer, to_strng(code)) }
+builder_print_body          :: #force_inline proc(builder : ^Builder, code : Code_Body)             { strbulider_append_string(& builder.buffer, to_strng(code)) }
+builder_print_comment       :: #force_inline proc(builder : ^Builder, code : Code_Comment)          { strbulider_append_string(& builder.buffer, to_strng(code)) }
+builder_print_constructor   :: #force_inline proc(builder : ^Builder, code : Code_Constructor)      { strbulider_append_string(& builder.buffer, to_strng(code)) }
+builder_print_class         :: #force_inline proc(builder : ^Builder, code : Code_Class)            { strbulider_append_string(& builder.buffer, to_strng(code)) }
+builder_print_define        :: #force_inline proc(builder : ^Builder, code : Code_Define)           { strbulider_append_string(& builder.buffer, to_strng(code)) }
+builder_print_define_params :: #force_inline proc(builder : ^Builder, code : Code_DefineParams)     { strbulider_append_string(& builder.buffer, to_strng(code)) }
+builder_print_enum          :: #force_inline proc(builder : ^Builder, code : Code_Enum)             { strbulider_append_string(& builder.buffer, to_strng(code)) }
+builder_print_exec          :: #force_inline proc(builder : ^Builder, code : Code_Exec)             { strbulider_append_string(& builder.buffer, to_strng(code)) }
+builder_print_extern        :: #force_inline proc(builder : ^Builder, code : Code_Extern)           { strbulider_append_string(& builder.buffer, to_strng(code)) }
+builder_print_include       :: #force_inline proc(builder : ^Builder, code : Code_Include)          { strbulider_append_string(& builder.buffer, to_strng(code)) }
+builder_print_friend        :: #force_inline proc(builder : ^Builder, code : Code_Friend)           { strbulider_append_string(& builder.buffer, to_strng(code)) }
+builder_print_fn            :: #force_inline proc(builder : ^Builder, code : Code_Fn)               { strbulider_append_string(& builder.buffer, to_strng(code)) }
+builder_print_module        :: #force_inline proc(builder : ^Builder, code : Code_Module)           { strbulider_append_string(& builder.buffer, to_strng(code)) }
+builder_print_namespace     :: #force_inline proc(builder : ^Builder, code : Code_NS)               { strbulider_append_string(& builder.buffer, to_strng(code)) }
+builder_print_operator      :: #force_inline proc(builder : ^Builder, code : Code_Operator)         { strbulider_append_string(& builder.buffer, to_strng(code)) }
+builder_print_opcast        :: #force_inline proc(builder : ^Builder, code : Code_OpCast)           { strbulider_append_string(& builder.buffer, to_strng(code)) }
+builder_print_params        :: #force_inline proc(builder : ^Builder, code : Code_Params)           { strbulider_append_string(& builder.buffer, to_strng(code)) }
+builder_print_specifiers    :: #force_inline proc(builder : ^Builder, code : Code_Specifiers)       { strbulider_append_string(& builder.buffer, to_strng(code)) }
+builder_print_struct        :: #force_inline proc(builder : ^Builder, code : Code_Struct)           { strbulider_append_string(& builder.buffer, to_strng(code)) }
+builder_print_template      :: #force_inline proc(builder : ^Builder, code : Code_Template)         { strbulider_append_string(& builder.buffer, to_strng(code)) }
+builder_print_typename      :: #force_inline proc(builder : ^Builder, code : Code_Typename)         { strbulider_append_string(& builder.buffer, to_strng(code)) }
+builder_print_typedef       :: #force_inline proc(builder : ^Builder, code : Code_Typedef)          { strbulider_append_string(& builder.buffer, to_strng(code)) }
+builder_print_union         :: #force_inline proc(builder : ^Builder, code : Code_Union)            { strbulider_append_string(& builder.buffer, to_strng(code)) }
+builder_print_var           :: #force_inline proc(builder : ^Builder, code : Code_Var)              { strbulider_append_string(& builder.buffer, to_strng(code)) }
+
+builder_write :: proc(builder : ^Builder) -> os.Error {
+	num, error := os.write(builder.file, strbuilder_to_string(builder.buffer))
+	return error
+}
+
+parse_file :: proc(path : string) -> (Code_Body, os.Error) {
+	content, error := os.read_entire_file_from_path(path, allocator = allocator_info_to_odin_allocator(_ctx.allocator_temp))
+	if error != .None do return nil, error
+	body := parse_global_body(content)
+	return body, error
+}
+
+untyped_file :: #force_inline proc(path : string) {
+	scan_file(fmt.aprintf("%s", path, allocator = allocator_info_to_odin_allocator(_ctx.allocator_temp)))
+}
+
+@(default_calling_convention="c", link_prefix="gen_")
+foreign gencpp_c11
+{
+	scan_file :: proc(path : [^]c.char) ---
+}
+
+//#endregion("Auxiliary")
+
+/*
 $$$$$$$\                      $$\                                 $$\ 
 $$  __$$\                     $$ |                                $$ |
 $$ |  $$ | $$$$$$\   $$$$$$$\ $$ |  $$\  $$$$$$\  $$$$$$$\   $$$$$$$ |
@@ -3375,7 +3504,7 @@ strbuilder_to_string :: #force_inline proc(builder : Str_Builder) -> string     
 
 strbuilder_make_string :: proc(allocator := USE_TEMP_ALLOCATOR, str : string) -> Str_Builder {
 	if allocator.procedure == nil do allocator = _ctx.allocator_temp
-	return strbuilder_make_length(allocator, transmute(^c.char) raw_data(str), len(str) )
+	return strbuilder_make_length(allocator, transmute([^]c.char) raw_data(str), len(str) )
 }
 
 // NOTE: The original implementation fo the _fmt related procedures utilized gencpp's c_str_fmt_va 
@@ -3425,7 +3554,7 @@ strbuilder_append_fmt :: proc(builder : ^Str_Builder, fmt : string, args : ..any
 // which had custom verbs for string and string builder: %S for string and %SB for Str_Builder
 // This rewrite uses fmt.bprintf instead so those are have changed to just %s for odin's string (equivalent),
 // but for Str_Builder there is no equivalnet and the user must use strbuider_to_string before feeding to the fmt procedure
-strbuilder_append_fmt_buf :: proc(builder : ^Str_Builder ) -> bool {
+strbuilder_append_fmt_buf :: proc(builder : ^Str_Builder, fmt : string, args : ..any ) -> bool {
 	assert(builder != nil)
 	header := strbuilder_header(^ builder)
 	@thread_local @static
@@ -3457,12 +3586,12 @@ strbiulder_duplicate :: proc(builder : Str_Builder, allocator := USE_TEMP_ALLOCA
 @(default_calling_convention="c", link_prefix="gen_")
 foreign gencpp_c11
 {
-	strbuilder_make_reserve   :: proc(allocator : Allocator_Info, capacity  : int) ---
-	strbuilder_make_length    :: proc(allocator : Allocator_Info, str       : ^c.char, length : int) ---
-	strbuilder_make_space_for :: proc(allocator : Allocator_Info, to_append : ^c.char, length : int) -> bool ---
+	strbuilder_make_reserve   :: proc(allocator : Allocator_Info, capacity  : int) -> Str_Builder ---
+	strbuilder_make_length    :: proc(allocator : Allocator_Info, str       : [^]c.char, length : int) -> Str_Builder ---
 
-	strbuilder_append_c_str_len     :: proc(builder : ^Str_Builder, to_append : ^c.char, length : int) -> bool ---
-	strbuilder_trim                 :: proc(builder : ^Str_Builder, cut_set   : ^c.char) ---
+	strbuilder_make_space_for       :: proc(builder : ^Str_Builder, to_append : [^]c.char, length : int) -> bool ---
+	strbuilder_append_c_str_len     :: proc(builder : ^Str_Builder, to_append : [^]c.char, length : int) -> bool ---
+	strbuilder_trim                 :: proc(builder : ^Str_Builder, cut_set   : [^]c.char) ---
 	strbuilder_visualize_whitespace :: proc(builder : Str_Builder) ---
 }
 //#endregion("Backend")
