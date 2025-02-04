@@ -19,7 +19,7 @@ main :: proc() {
 		switch(code.type) {
 			case .Variable:
 				var := cast(cpp.Code_Var) code
-				fmt.tprintf("%v", cpp.to_string(var.value))
+				fmt.tprintf("%s", cpp.to_string(var.value))
 		}
 	}
 

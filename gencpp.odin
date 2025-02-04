@@ -26,7 +26,7 @@ import   "core:mem"
 import   "core:reflect"
 import   "core:runtime"
 
-// Eventually gencpp will support execution statements and expression
+// Eventually gencpp will support execution statements and expressions
 // For now it does not.
 EXECUTION_SUPPORT :: false
 
@@ -972,6 +972,8 @@ append :: proc {
 	specifiers_append,
 }
 
+body_append :: #force_inline proc(body : Code_Body) { code_append(transmute(Code) body) }
+
 begin :: proc {
 	begin_body,
 	begin_define_params,
@@ -987,7 +989,52 @@ debug_str :: proc {
 	constructor_debug_str,
 	class_debug_str,
 	define_debug_str,
+	define_params_debug_str,
+	enum_debug_str,
+	exec_debug_str,
+	extern_debug_str,
+	include_debug_str,
+	friend_debug_str,
+	fn_debug_str,
+	module_debug_str,
+	namespace_debug_str,
+	operator_debug_str,
+	opcast_debug_str,
+	params_debug_str,
+	specifiers_debug_str,
+	struct_debug_str,
+	template_debug_str,
+	typename_debug_str,
+	typedef_debug_str,
+	union_debug_str,
+	var_debug_str,
 }
+
+attributes_debug_str    :: #force_inline proc(code : Code_Attributes)   { code__debug_str(transmute(Code) code) }
+body_debug_str          :: #force_inline proc(code : Code_Body)         { code__debug_str(transmute(Code) code) }
+comment_debug_str       :: #force_inline proc(code : Code_Comment)      { code__debug_str(transmute(Code) code) }
+constructor_debug_str   :: #force_inline proc(code : Code_Constructor)  { code__debug_str(transmute(Code) code) }
+class_debug_str         :: #force_inline proc(code : Code_Class)        { code__debug_str(transmute(Code) code) }
+define_debug_str        :: #force_inline proc(code : Code_Define)       { code__debug_str(transmute(Code) code) }
+define_params_debug_str :: #force_inline proc(code : Code_DefineParams) { code__debug_str(transmute(Code) code) }
+enum_debug_str          :: #force_inline proc(code : Code_Enum)         { code__debug_str(transmute(Code) code) }
+exec_debug_str          :: #force_inline proc(code : Code_Exec)         { code__debug_str(transmute(Code) code) }
+extern_debug_str        :: #force_inline proc(code : Code_Extern)       { code__debug_str(transmute(Code) code) }
+include_debug_str       :: #force_inline proc(code : Code_Include)      { code__debug_str(transmute(Code) code) }
+friend_debug_str        :: #force_inline proc(code : Code_Friend)       { code__debug_str(transmute(Code) code) }
+fn_debug_str            :: #force_inline proc(code : Code_Fn)           { code__debug_str(transmute(Code) code) }
+module_debug_str        :: #force_inline proc(code : Code_Module)       { code__debug_str(transmute(Code) code) }
+namespace_debug_str     :: #force_inline proc(code : Code_Namespace)    { code__debug_str(transmute(Code) code) }
+operator_debug_str      :: #force_inline proc(code : Code_Operator)     { code__debug_str(transmute(Code) code) }
+opcast_debug_str        :: #force_inline proc(code : Code_OpCast)       { code__debug_str(transmute(Code) code) }
+params_debug_str        :: #force_inline proc(code : Code_Params)       { code__debug_str(transmute(Code) code) }
+specifiers_debug_str    :: #force_inline proc(code : Code_Specifiers)   { code__debug_str(transmute(Code) code) }
+struct_debug_str        :: #force_inline proc(code : Code_Struct)       { code__debug_str(transmute(Code) code) }
+template_debug_str      :: #force_inline proc(code : Code_Template)     { code__debug_str(transmute(Code) code) }
+typename_debug_str      :: #force_inline proc(code : Code_Typename)     { code__debug_str(transmute(Code) code) }
+typedef_debug_str       :: #force_inline proc(code : Code_Typedef)      { code__debug_str(transmute(Code) code) }
+union_debug_str         :: #force_inline proc(code : Code_Union)        { code__debug_str(transmute(Code) code) }
+var_debug_str           :: #force_inline proc(code : Code_Var)          { code__debug_str(transmute(Code) code) }
 
 duplicate :: proc {
 	code__duplicate,
@@ -999,9 +1046,50 @@ duplicate :: proc {
 	define_duplicate,
 	define_params_duplicate,
 	enum_duplicate,
-	extern_duplicate,
 	exec_duplicate,
+	extern_duplicate,
+	include_duplicate,
+	freind_duplicate,
+	fn_duplicate,
+	module_duplicate,
+	namespace_duplicate,
+	operator_duplicate,
+	opcast_duplicate,
+	params_duplicate,
+	specifers_duplicate,
+	struct_duplicate,
+	template_duplicate,
+	typename_duplicate,
+	typedef_duplicate,
+	union_duplicate,
+	var_duplicate,
 }
+
+attributes_duplicate    :: #force_inline proc(code: Code_Attributes)   -> Code { return code__duplicate(transmute(Code) code) }
+body_duplicate          :: #force_inline proc(code: Code_Body)         -> Code { return code__duplicate(transmute(Code) code) }
+comment_duplicate       :: #force_inline proc(code: Code_Comment)      -> Code { return code__duplicate(transmute(Code) code) }
+constructor_duplicate   :: #force_inline proc(code: Code_Constructor)  -> Code { return code__duplicate(transmute(Code) code) }
+class_duplicate         :: #force_inline proc(code: Code_Class)        -> Code { return code__duplicate(transmute(Code) code) }
+define_duplicate        :: #force_inline proc(code: Code_Define)       -> Code { return code__duplicate(transmute(Code) code) }
+define_params_duplicate :: #force_inline proc(code: Code_DefineParams) -> Code { return code__duplicate(transmute(Code) code) }
+enum_duplicate          :: #force_inline proc(code: Code_Enum)         -> Code { return code__duplicate(transmute(Code) code) }
+exec_duplicate          :: #force_inline proc(code: Code_Exec)         -> Code { return code__duplicate(transmute(Code) code) }
+extern_duplicate        :: #force_inline proc(code: Code_Extern)       -> Code { return code__duplicate(transmute(Code) code) }
+include_duplicate       :: #force_inline proc(code: Code_Include)      -> Code { return code__duplicate(transmute(Code) code) }
+friend_duplicate        :: #force_inline proc(code: Code_Friend)       -> Code { return code__duplicate(transmute(Code) code) }
+fn_duplicate            :: #force_inline proc(code: Code_Fn)           -> Code { return code__duplicate(transmute(Code) code) }
+module_duplicate        :: #force_inline proc(code: Code_Module)       -> Code { return code__duplicate(transmute(Code) code) }
+namespace_duplicate     :: #force_inline proc(code: Code_Namespace)    -> Code { return code__duplicate(transmute(Code) code) }
+operator_duplicate      :: #force_inline proc(code: Code_Operator)     -> Code { return code__duplicate(transmute(Code) code) }
+opcast_duplicate        :: #force_inline proc(code: Code_OpCast)       -> Code { return code__duplicate(transmute(Code) code) }
+params_duplicate        :: #force_inline proc(code: Code_Params)       -> Code { return code__duplicate(transmute(Code) code) }
+specifiers_duplicate    :: #force_inline proc(code: Code_Specifiers)   -> Code { return code__duplicate(transmute(Code) code) }
+struct_duplicate        :: #force_inline proc(code: Code_Struct)       -> Code { return code__duplicate(transmute(Code) code) }
+template_duplicate      :: #force_inline proc(code: Code_Template)     -> Code { return code__duplicate(transmute(Code) code) }
+typename_duplicate      :: #force_inline proc(code: Code_Typename)     -> Code { return code__duplicate(transmute(Code) code) }
+typedef_duplicate       :: #force_inline proc(code: Code_Typedef)      -> Code { return code__duplicate(transmute(Code) code) }
+union_duplicate         :: #force_inline proc(code: Code_Union)        -> Code { return code__duplicate(transmute(Code) code) }
+var_duplicate           :: #force_inline proc(code: Code_Var)          -> Code { return code__duplicate(transmute(Code) code) }
 
 end :: proc {
 	end_body,
@@ -1018,6 +1106,11 @@ entry :: proc {
 	specifiers_entry,
 }
 
+body_entry          :: #force_inline proc(self: Code_Body,         idx: u32) -> ^Code { return code_entry(transmute(Code) self, idx) }
+define_params_entry :: #force_inline proc(self: Code_DefineParams, idx: u32) -> ^Code { return code_entry(transmute(Code) self, idx) }
+params_entry        :: #force_inline proc(self: Code_Params,       idx: u32) -> ^Code { return code_entry(transmute(Code) self, idx) }
+specifiers_entry    :: #force_inline proc(self: Code_Specifiers,   idx: u32) -> ^Code { return code_entry(transmute(Code) self, idx) }
+
 has_entries :: proc {
 	code_has_entries,
 	body_has_entries,
@@ -1026,17 +1119,128 @@ has_entries :: proc {
 	specifiers_has_entries,
 }
 
+body_has_entries          :: #force_inline proc(self: Code_Body)         -> bool { return code_has_entries(transmute(Code) self) }
+define_params_has_entries :: #force_inline proc(self: Code_DefineParams) -> bool { return code_has_entries(transmute(Code) self) }
+params_has_entries        :: #force_inline proc(self: Code_Params)       -> bool { return code_has_entries(transmute(Code) self) }
+specifiers_has_entries    :: #force_inline proc(self: Code_Specifiers)   -> bool { return code_has_entries(transmute(Code) self) }
+
 is_body :: proc {
-	code_is_body,
+	code__is_body,
 }
 
 is_equal :: proc {
 	code__is_equal,
+	attributes_is_equal,
+	body_is_equal,
+	comment_is_equal,
+	constructor_is_equal,
+	class_is_equal,
+	define_is_equal,
+	define_params_is_equal,
+	destructor_is_equal,
+	enum_is_equal,
+	exec_is_equal,
+	extern_is_equal,
+	include_is_equal,
+	friend_is_equal,
+	fn_sis_equal,
+	module_is_equal,
+	namespace_is_equal,
+	operator_is_equal,
+	opcast_is_equal,
+	params_is_equal,
+	specifiers_is_equal,
+	struct_is_equal,
+	template_is_equal,
+	typename_is_equal,
+	typedef_is_equal,
+	union_is_equal,
+	var_is_equal,
 }
 
+attributes_is_equal    :: #force_inline proc(code: Code_Attributes)   -> bool { return code__is_equal(transmute(Code) code) }
+body_is_equal          :: #force_inline proc(code: Code_Body)         -> bool { return code__is_equal(transmute(Code) code) }
+comment_is_equal       :: #force_inline proc(code: Code_Comment)      -> bool { return code__is_equal(transmute(Code) code) }
+constructor_is_equal   :: #force_inline proc(code: Code_Constructor)  -> bool { return code__is_equal(transmute(Code) code) }
+class_is_equal         :: #force_inline proc(code: Code_Class)        -> bool { return code__is_equal(transmute(Code) code) }
+define_is_equal        :: #force_inline proc(code: Code_Define)       -> bool { return code__is_equal(transmute(Code) code) }
+define_params_is_equal :: #force_inline proc(code: Code_DefineParams) -> bool { return code__is_equal(transmute(Code) code) }
+destructor_is_equal    :: #force_inline proc(code: Code_Destructor)   -> bool { return code__is_equal(transmute(Code) code) }
+enum_is_equal          :: #force_inline proc(code: Code_Enum)         -> bool { return code__is_equal(transmute(Code) code) }
+exec_is_equal          :: #force_inline proc(code: Code_Exec)         -> bool { return code__is_equal(transmute(Code) code) }
+extern_is_equal        :: #force_inline proc(code: Code_Extern)       -> bool { return code__is_equal(transmute(Code) code) }
+include_is_equal       :: #force_inline proc(code: Code_Include)      -> bool { return code__is_equal(transmute(Code) code) }
+friend_is_equal        :: #force_inline proc(code: Code_Friend)       -> bool { return code__is_equal(transmute(Code) code) }
+fn_is_equal            :: #force_inline proc(code: Code_Fn)           -> bool { return code__is_equal(transmute(Code) code) }
+module_is_equal        :: #force_inline proc(code: Code_Module)       -> bool { return code__is_equal(transmute(Code) code) }
+namespace_is_equal     :: #force_inline proc(code: Code_Namespace)    -> bool { return code__is_equal(transmute(Code) code) }
+operator_is_equal      :: #force_inline proc(code: Code_Operator)     -> bool { return code__is_equal(transmute(Code) code) }
+opcast_is_equal        :: #force_inline proc(code: Code_OpCast)       -> bool { return code__is_equal(transmute(Code) code) }
+params_is_equal        :: #force_inline proc(code: Code_Params)       -> bool { return code__is_equal(transmute(Code) code) }
+specifiers_is_equal    :: #force_inline proc(code: Code_Specifiers)   -> bool { return code__is_equal(transmute(Code) code) }
+struct_is_equal        :: #force_inline proc(code: Code_Struct)       -> bool { return code__is_equal(transmute(Code) code) }
+template_is_equal      :: #force_inline proc(code: Code_Template)     -> bool { return code__is_equal(transmute(Code) code) }
+typename_is_equal      :: #force_inline proc(code: Code_Typename)     -> bool { return code__is_equal(transmute(Code) code) }
+typedef_is_equal       :: #force_inline proc(code: Code_Typedef)      -> bool { return code__is_equal(transmute(Code) code) }
+union_is_equal         :: #force_inline proc(code: Code_Union)        -> bool { return code__is_equal(transmute(Code) code) }
+var_is_equal           :: #force_inline proc(code: Code_Var)          -> bool { return code__is_equal(transmute(Code) code) }
+
 is_valid :: proc {
-	code_is_valid,
+	code__is_valid,
+	attributes_is_valid,
+	bodyis_valid,
+	comment_is_valid,
+	constructor_is_valid,
+	class_is_valid,
+	define_is_valid,
+	define_params_is_valid,
+	destructor_is_valid,
+	enum_is_valid,
+	exec_is_valid,
+	extern_is_valid,
+	include_is_valid,
+	friend_is_valid,
+	fn_is_valid,
+	module_is_valid,
+	namespace_is_valid,
+	operator_is_valid,
+	opcast_is_valid,
+	params_is_valid,
+	specifiers_is_valid,
+	struct_is_valid,
+	template_is_valid,
+	typename_is_valid,
+	typedef_is_valid,
+	union_is_valid,
+	var_is_valid,
 }
+
+attributes_is_valid    :: #force_inline proc(self: Code_Attributes)   -> bool { return code_is_valid(transmute(Code) self) }
+body_is_valid          :: #force_inline proc(self: Code_Body)         -> bool { return code_is_valid(transmute(Code) self) }
+comment_is_valid       :: #force_inline proc(self: Code_Comment)      -> bool { return code_is_valid(transmute(Code) self) }
+constructor_is_valid   :: #force_inline proc(self: Code_Constructor)  -> bool { return code_is_valid(transmute(Code) self) }
+class_is_valid         :: #force_inline proc(self: Code_Class)        -> bool { return code_is_valid(transmute(Code) self) }
+define_is_valid        :: #force_inline proc(self: Code_Define)       -> bool { return code_is_valid(transmute(Code) self) }
+define_params_is_valid :: #force_inline proc(self: Code_DefineParams) -> bool { return code_is_valid(transmute(Code) self) }
+destructor_is_valid    :: #force_inline proc(self: Code_Destructor)   -> bool { return code_is_valid(transmute(Code) self) }
+enum_is_valid          :: #force_inline proc(self: Code_Enum)         -> bool { return code_is_valid(transmute(Code) self) }
+exec_is_valid          :: #force_inline proc(self: Code_Exec)         -> bool { return code_is_valid(transmute(Code) self) }
+extern_is_valid        :: #force_inline proc(self: Code_Extern)       -> bool { return code_is_valid(transmute(Code) self) }
+include_is_valid       :: #force_inline proc(self: Code_Include)      -> bool { return code_is_valid(transmute(Code) self) }
+friend_is_valid        :: #force_inline proc(self: Code_Friend)       -> bool { return code_is_valid(transmute(Code) self) }
+fn_is_valid            :: #force_inline proc(self: Code_Fn)           -> bool { return code_is_valid(transmute(Code) self) }
+module_is_valid        :: #force_inline proc(self: Code_Module)       -> bool { return code_is_valid(transmute(Code) self) }
+namespace_is_valid     :: #force_inline proc(self: Code_Namespace)    -> bool { return code_is_valid(transmute(Code) self) }
+operator_is_valid      :: #force_inline proc(self: Code_Operator)     -> bool { return code_is_valid(transmute(Code) self) }
+opcast_is_valid        :: #force_inline proc(self: Code_OpCast)       -> bool { return code_is_valid(transmute(Code) self) }
+params_is_valid        :: #force_inline proc(self: Code_Params)       -> bool { return code_is_valid(transmute(Code) self) }
+specifiers_is_valid    :: #force_inline proc(self: Code_Specifiers)   -> bool { return code_is_valid(transmute(Code) self) }
+struct_is_valid        :: #force_inline proc(self: Code_Struct)       -> bool { return code_is_valid(transmute(Code) self) }
+template_is_valid      :: #force_inline proc(self: Code_Template)     -> bool { return code_is_valid(transmute(Code) self) }
+typename_is_valid      :: #force_inline proc(self: Code_Typename)     -> bool { return code_is_valid(transmute(Code) self) }
+typedef_is_valid       :: #force_inline proc(self: Code_Typedef)      -> bool { return code_is_valid(transmute(Code) self) }
+union_is_valid         :: #force_inline proc(self: Code_Union)        -> bool { return code_is_valid(transmute(Code) self) }
+var_is_valid           :: #force_inline proc(self: Code_Var)          -> bool { return code_is_valid(transmute(Code) self) }
 
 next :: proc {
 	next_body,
@@ -1075,6 +1279,33 @@ set_global :: proc {
 	var_set_global,
 }
 
+attributes_set_global    :: #force_inline proc(self: Code_Attributes)   { code_set_global(transmute(Code) self) }
+body_set_global          :: #force_inline proc(self: Code_Body)         { code_set_global(transmute(Code) self) }
+comment_set_global       :: #force_inline proc(self: Code_Comment)      { code_set_global(transmute(Code) self) }
+constructor_set_global   :: #force_inline proc(self: Code_Constructor)  { code_set_global(transmute(Code) self) }
+class_set_global         :: #force_inline proc(self: Code_Class)        { code_set_global(transmute(Code) self) }
+define_set_global        :: #force_inline proc(self: Code_Define)       { code_set_global(transmute(Code) self) }
+define_params_set_global :: #force_inline proc(self: Code_DefineParams) { code_set_global(transmute(Code) self) }
+destructor_set_global    :: #force_inline proc(self: Code_Destructor)   { code_set_global(transmute(Code) self) }
+enum_set_global          :: #force_inline proc(self: Code_Enum)         { code_set_global(transmute(Code) self) }
+exec_set_global          :: #force_inline proc(self: Code_Exec)         { code_set_global(transmute(Code) self) }
+extern_set_global        :: #force_inline proc(self: Code_Extern)       { code_set_global(transmute(Code) self) }
+include_set_global       :: #force_inline proc(self: Code_Include)      { code_set_global(transmute(Code) self) }
+friend_set_global        :: #force_inline proc(self: Code_Friend)       { code_set_global(transmute(Code) self) }
+fn_set_global            :: #force_inline proc(self: Code_Fn)           { code_set_global(transmute(Code) self) }
+module_set_global        :: #force_inline proc(self: Code_Module)       { code_set_global(transmute(Code) self) }
+namespace_set_global     :: #force_inline proc(self: Code_Namespace)    { code_set_global(transmute(Code) self) }
+operator_set_global      :: #force_inline proc(self: Code_Operator)     { code_set_global(transmute(Code) self) }
+opcast_set_global        :: #force_inline proc(self: Code_OpCast)       { code_set_global(transmute(Code) self) }
+params_set_global        :: #force_inline proc(self: Code_Params)       { code_set_global(transmute(Code) self) }
+specifiers_set_global    :: #force_inline proc(self: Code_Specifiers)   { code_set_global(transmute(Code) self) }
+struct_set_global        :: #force_inline proc(self: Code_Struct)       { code_set_global(transmute(Code) self) }
+template_set_global      :: #force_inline proc(self: Code_Template)     { code_set_global(transmute(Code) self) }
+typename_set_global      :: #force_inline proc(self: Code_Typename)     { code_set_global(transmute(Code) self) }
+typedef_set_global       :: #force_inline proc(self: Code_Typedef)      { code_set_global(transmute(Code) self) }
+union_set_global         :: #force_inline proc(self: Code_Union)        { code_set_global(transmute(Code) self) }
+var_set_global           :: #force_inline proc(self: Code_Var)          { code_set_global(transmute(Code) self) }
+
 to_strbuilder :: proc {
 	attributes_to_strbuilder,
 	body_to_strbuilder,
@@ -1103,102 +1334,6 @@ to_strbuilder :: proc {
 	union_to_strbuilder,
 	var_to_strbuilder,
 }
-
-to_string :: proc {
-	attributes_to_string,
-	body_to_string,
-	class_to_string,
-	comment_to_string,
-	define_to_string,
-	define_params_to_string,
-	destructor_to_string,
-	enum_to_string,
-	exec_to_string,
-	extern_to_string,
-	include_to_string,
-	friend_to_string,
-	fn_to_string,
-	module_to_string,
-	namespace_to_string,
-	operator_to_string,
-	opcast_to_string,
-	params_to_string,
-	preprocess_to_string,
-	pragma_to_string,
-	specifiers_to_string,
-	struct_to_string,
-	template_to_string,
-	typename_to_string,
-	typedef_to_string,
-	union_to_string,
-	var_to_string,
-	strbuilder_to_string,
-}
-
-type_str :: proc {
-	code_type_str,
-	attributes_type_str,
-	body_type_str,
-	class_type_str,
-	comment_type_str,
-	define_type_str,
-	define_params_type_str,
-	destructor_type_str,
-	enum_type_str,
-	exec_type_str,
-	extern_type_str,
-	include_type_str,
-	friend_type_str,
-	fn_type_str,
-	module_type_str,
-	namespace_type_str,
-	operator_type_str,
-	opcast_type_str,
-	params_type_str,
-	preproccess_type_str,
-	pragma_type_str,
-	specifiers_type_str,
-	struct_type_str,
-	template_type_str,
-	typename_type_str,
-	typedef_type_str,
-	union_type_str,
-	var_type_str,
-}
-
-validate_body :: proc {
-	code__validate_body,
-	body_validate_body,
-}
-
-attributes_to_string    :: #force_inline proc(attributes  : Code_Attributes)      -> Str_Builder { return strbuilder_to_string( attributes_to_strbuilder(attributes)) }
-body_to_string          :: #force_inline proc(body        : Code_Body)            -> Str_Builder { return strbuilder_to_string( body_to_strbuilder(body)) }
-comment_to_string       :: #force_inline proc(comment     : Code_Comment)         -> Str_Builder { return strbuilder_to_string( comment_to_strbuilder(comment)) }
-constructor_to_string   :: #force_inline proc(constructor : Code_Constructor)     -> Str_Builder { return strbuilder_to_string( constructor_to_strbuilder(constructor)) }
-class_to_string         :: #force_inline proc(class       : Code_Class)           -> Str_Builder { return strbuilder_to_string( class_to_strbuilder(class)) }
-define_to_string        :: #force_inline proc(define      : Code_Define)          -> Str_Builder { return strbuilder_to_string( define_to_strbuilder(define)) }
-define_params_to_string :: #force_inline proc(params      : Code_Define_Params)   -> Str_Builder { return strbuilder_to_string( define_params_to_strbuilder(params)) }
-desturctor_to_string    :: #force_inline proc(destructor  : Code_Destructor)      -> Str_Builder { return strbuilder_to_string( destructor_to_strbuilder(destructor)) }
-enum_to_string          :: #force_inline proc(code        : Code_Enum)            -> Str_Builder { return strbuilder_to_string( enum_to_string(code)) }
-exec_to_string          :: #force_inline proc(exec        : Code_Exec)            -> Str_Builder { return strbuilder_to_string( exec_to_strbuilder(exec)) }
-extern_to_string        :: #force_inline proc(extern      : Code_Extern)          -> Str_Builder { return strbuilder_to_string( extern_to_strbuilder(extern)) }
-include_to_string       :: #force_inline proc(include     : Code_Include)         -> Str_Builder { return strbuilder_to_string( include_to_strbuilder(include)) }
-friend_to_string        :: #force_inline proc(friend      : Code_Friend)          -> Str_Builder { return strbuilder_to_string( friend_to_strbuilder(friend)) }
-fn_to_string            :: #force_inline proc(fn          : Code_Fn)              -> Str_Builder { return strbuilder_to_string( fn_to_strbuilder(fn)) }
-module_to_string        :: #force_inline proc(module      : Code_Module)          -> Str_Builder { return strbuilder_to_string( module_to_strbuilder(module)) }
-namespace_to_string     :: #force_inline proc(namespace   : Code_NS)              -> Str_Builder { return strbuilder_to_string( namespace_to_strbuilder(namespace)) }
-operator_to_string      :: #force_inline proc(operator    : Code_NS)              -> Str_Builder { return strbuilder_to_string( operator_to_strbuilder(operator)) }
-opcast_to_string        :: #force_inline proc(opcast      : Code_OpCast)          -> Str_Builder { return strbuilder_to_string( opcast_to_strbuilder(opcast)) }
-params_to_string        :: #force_inline proc(params      : Code_Params)          -> Str_Builder { return strbuilder_to_string( params_to_strbuilder(params)) }
-preprocess_to_string    :: #force_inline proc(cond        : Code_Preprocess_Cond) -> Str_Builder { return strbuilder_to_string( preprocess_to_strbuilder(cond)) }
-pragma_to_string        :: #force_inline proc(pragma      : Code_Pragma)          -> Str_Builder { return strbuilder_to_string( pragma_to_strbuilder(pragma)) }
-specifiers_to_string    :: #force_inline proc(specifiers  : Code_Specifiers)      -> Str_Builder { return strbuilder_to_string( specifiers_to_strbuilder(specifiers)) }
-struct_to_string        :: #force_inline proc(code        : Code_Struct)          -> Str_Builder { return strbuilder_to_string( struct_to_string(code)) }
-template_to_string      :: #force_inline proc(template    : Code_Template)        -> Str_Builder { return strbuilder_to_string( template_to_strbuilder(template)) }
-typename_to_string      :: #force_inline proc(typename    : Code_Typename)        -> Str_Builder { return strbuilder_to_string( typename_to_String(typename)) }
-typedef_to_string       :: #force_inline proc(typedef     : Code_Typedef)         -> Str_Builder { return strbuilder_to_string( typedef_to_strbuilder(typedef)) }
-union_to_string         :: #force_inline proc(code        : Code_Union)           -> Str_Builder { return strbuilder_to_string( union_to_strbuilder(code)) }
-var_to_string           :: #force_inline proc(var         : Code_Var)             -> Str_Builder { return strbuilder_to_string( var_to_strbuilder(var)) }
 
 attributes_to_strbuilder :: #force_inline proc(attributes : Code_Attributes) -> Str_Builder {
 	assert(attributes != nil)
@@ -1271,6 +1406,29 @@ extern_to_strbuilder :: proc(extern : Code_Extern, result : ^Str_Builder) {
 	}
 }
 
+friend_to_strbuilder :: proc(friend : Code_Friend) -> Str_Builder {
+	result := strbuilder_make_reserve(ctx.allocator_temp, 256)
+	friend_to_strbuilder_ref(friend, result)
+}
+
+friend_to_strbuilder_ref :: proc(friend : Code_Friend, result : ^Str_Builder) {
+	assert(friend != nil)
+	assert(result != nil)
+	strbuilder_append_fmt( result, "friend %SB", code_to_strbuilder(self->Declaration) );
+
+	result_str := strbuilder_to_string(result)
+	if ( friend.declaration.type != .Function && self.declaration.type != .Operator && result_str[len(result_str) - 1] != ';' ) {
+		strbuilder_append_str( result, ";" );
+	}
+
+	if ( self->InlineCmt ) {
+		strbuilder_append_fmt( result, "  %S", self.inline_cmt.content );
+	}
+	else {
+		strbuilder_append_str( result, "\n");
+	}
+}
+
 include_to_strbuilder :: proc(include : Code_Include) -> Str_Builder {
 	assert(include != nil)
 	return strbuilder_fmt_buf(_ctx.allocator_temp, "#include %S\n", include.content)
@@ -1282,53 +1440,129 @@ include_to_strbuilder_ref :: proc(include : Code_Include, result : ^Str_Builder)
 	strbuilder_append_fmt(result, "#include %S\n")
 }
 
-friend_to_strbuilder :: proc(friend : Code_Friend) -> Str_Builder {
-	result := strbuilder_make_reserve(ctx.allocator_temp, 256)
-	friend_to_strbuilder_ref(friend, result)
-}
-
-friend_to_strbuilder_ref :: proc(friend : Code_Friend, result : ^Str_Builder) {
-
-}
-
 module_to_strbuilder :: proc(code : Code_Module) -> Str_Builder {
-	return {nil}
+	assert(code != nil)
+	result := strbuilder_make_reserve(_ctx.allocator_temp, 64)
+	module_to_strbuilder_ref(code, & result)
+	return result
 }
 
 namespace_to_strbuilder :: proc(code : Code_NS) -> Str_Builder {
-	return {nil}
+	assert(code != nil)
+	result := strbuilder_make_reserve(_ctx.allocator_temp, 512)
+	namespace_to_strbuilder_ref(code, & result)
+	return result
 }
 
 namespace_to_strbuilder_ref :: proc(code : Code_NS, result : ^Str_Builder) {
+	assert(code != nil)
+	assert(result != nil)
+	result := strbuilder_make_reserve(_ctx.allocator_temp, 512 )
+	namespace_to_strbuilder_ref(code, & result)
+	return result
+}
 
+params_to_strbuilder :: proc(params : Code_Params) -> Str_Builder {
+	assert(params != nil)
+	result := strbuilder_make_reserve(_ctx.temp_allocator, 128)
+	params_to_strbuilder_ref(params, & result)
+	return result
 }
 
 pragma_to_strbuilder :: proc(pragma : Code_Pragma) -> Str_Builder {
-	return {nil}
+	assert(pragma != nil)
+	result := strbuilder_make_reserve(_ctx.allocator_temp, 512)
+	pragma_to_strbuilder_ref(pragma, & result)
+	return result
+}
+
+pragam_to_strbuilder_ref :: proc(pragma : Code_Pragma, result : ^Str_Builder) {
+	assert(self != nil)
+	assert(result != nil)
+	strbuilder_append_fmt(result, "#pragma %S\n", pragma.content)
 }
 
 preprocess_to_strbuilder :: proc(cond : Code_Preprocess_Cond) -> Str_Builder {
-	return {nil}
+	assert(cond != nil)
+	result := strbuilder_make_reserve(_ctx.allocator_temp, 512)
+	pragma_to_strbuilder_ref(cond, & result);
+	return result
+}
+
+preprocess_to_strbuilder_if :: proc(cond : Code_Preprocess_Cond, result : ^Str_Builder) {
+	assert(cond != nil)
+	assert(result != nil)
+	strbuilder_append_fmt(cond, "#if %S", cond.content)
+}
+
+preprocess_to_strbuilder_ifdef :: proc(cond : Code_Preprocess_Cond, result : ^Str_Builder) {
+	assert(cond != nil)
+	assert(result != nil)
+	strbuilder_append_fmt(cond, "#ifdef %S\n", cond.content)
+}
+
+preprocess_to_strbuilder_ifndef :: proc(cond : Code_Preprocess_Cond, result : ^Str_Builder) {
+	assert(cond != nil)
+	assert(result != nil)
+	strbuilder_append_fmt(cond, "#ifndef %S", cond.content)
+}
+
+preprocess_to_strbuilder_elif :: proc(cond : Code_Preprocess_Cond, result : ^Str_Builder) {
+	assert(cond != nil)
+	assert(result != nil)
+	strbuilder_append_fmt(cond, "#elif %S\n", cond.content)
+}
+
+preprocess_to_strbuilder_else :: proc(cond : Code_Preprocess_Cond, result : ^Str_Builder) {
+	assert(cond != nil)
+	assert(result != nil)
+	strbuilder_append_fmt(cond, "#else\n")
+}
+
+preprocess_to_strbuilder_else :: proc(cond : Code_Preprocess_Cond, result : ^Str_Builder) {
+	assert(cond != nil)
+	assert(result != nil)
+	strbuilder_append_fmt(cond, "#endif\n")
 }
 
 specifiers_to_strbuilder :: proc(specifiers : Code_Specifiers) -> Str_Builder {
-	return {nil}
+	assert(specifiers != nil)
+	result := strbuilder_make_reserve(_ctx.allocator_temp, 64)
+	specifiers_to_strbuilder_ref(specifiers, & result)
+	return result
 }
 
 template_to_strbuilder :: proc(template : Code_Template) -> Str_Builder {
-	return {nil}
-}
-
-typename_to_strbuilder :: proc(typename : Code_Typename) -> Str_Builder {
-	return {nil}
+	assert(template != nil)
+	result := strbuilder_make_reserve(_ctx.allocator_temp, 1024)
+	template_to_strbuilder_ref(template, & result)
+	return result
 }
 
 typedef_to_strbuilder :: proc(typedef : Code_Typedef) -> Str_Builder {
-	return {nil}
+	assert(self)
+	result := strbuilder_make_reserve(_ctx.allocator_temp, 128)
+	typedef_to_strbuilder_ref(typedef, & result)
+	return result
+}
+
+typename_to_strbuilder :: proc(typename : Code_Typename) -> Str_Builder {
+	assert(typename != nil)
+	result := strbuilder_make_reserve(_ctx.allocator_temp, 128)
+	typename_to_strbuilder_ref(typename, & result)
+	return result
 }
 
 using_to_strbuilder :: proc(code : Code_Using) -> Str_Builder {
-	return {nil}
+	assert(code != nil)
+	result := strbuilder_make_reserve(_ctx.allocator_temp, 128)
+	switch code.type {
+		case .Using:
+			using_to_strbuilder_ref(code, & result)
+		case .Using_Namespace:
+			using_to_strbuilder_ns(code, & result)
+	}
+	return result
 }
 
 using_to_strbuilder_ns :: proc(self : Code_Using, builder : ^Str_Builder) {
@@ -1343,7 +1577,134 @@ using_to_strbuilder_ns :: proc(self : Code_Using, builder : ^Str_Builder) {
 }
 
 var_to_strbuilder :: proc(var : Code_Var) -> Str_Builder {
-	return { nil }
+	assert(var != nil)
+	result := strbuilder_make_reserve(_ctx.allocator_temp, 256)
+	var_to_strbuilder_ref(var, & result)
+	return result
+}
+
+to_string :: proc {
+	attributes_to_string,
+	body_to_string,
+	class_to_string,
+	comment_to_string,
+	define_to_string,
+	define_params_to_string,
+	destructor_to_string,
+	enum_to_string,
+	exec_to_string,
+	extern_to_string,
+	include_to_string,
+	friend_to_string,
+	fn_to_string,
+	module_to_string,
+	namespace_to_string,
+	operator_to_string,
+	opcast_to_string,
+	params_to_string,
+	preprocess_to_string,
+	pragma_to_string,
+	specifiers_to_string,
+	struct_to_string,
+	template_to_string,
+	typename_to_string,
+	typedef_to_string,
+	union_to_string,
+	var_to_string,
+	strbuilder_to_string,
+}
+
+attributes_to_string    :: #force_inline proc(attributes  : Code_Attributes)      -> Str_Builder { return strbuilder_to_string( attributes_to_strbuilder(attributes)) }
+body_to_string          :: #force_inline proc(body        : Code_Body)            -> Str_Builder { return strbuilder_to_string( body_to_strbuilder(body)) }
+comment_to_string       :: #force_inline proc(comment     : Code_Comment)         -> Str_Builder { return strbuilder_to_string( comment_to_strbuilder(comment)) }
+constructor_to_string   :: #force_inline proc(constructor : Code_Constructor)     -> Str_Builder { return strbuilder_to_string( constructor_to_strbuilder(constructor)) }
+class_to_string         :: #force_inline proc(class       : Code_Class)           -> Str_Builder { return strbuilder_to_string( class_to_strbuilder(class)) }
+define_to_string        :: #force_inline proc(define      : Code_Define)          -> Str_Builder { return strbuilder_to_string( define_to_strbuilder(define)) }
+define_params_to_string :: #force_inline proc(params      : Code_Define_Params)   -> Str_Builder { return strbuilder_to_string( define_params_to_strbuilder(params)) }
+desturctor_to_string    :: #force_inline proc(destructor  : Code_Destructor)      -> Str_Builder { return strbuilder_to_string( destructor_to_strbuilder(destructor)) }
+enum_to_string          :: #force_inline proc(code        : Code_Enum)            -> Str_Builder { return strbuilder_to_string( enum_to_string(code)) }
+exec_to_string          :: #force_inline proc(exec        : Code_Exec)            -> Str_Builder { return strbuilder_to_string( exec_to_strbuilder(exec)) }
+extern_to_string        :: #force_inline proc(extern      : Code_Extern)          -> Str_Builder { return strbuilder_to_string( extern_to_strbuilder(extern)) }
+include_to_string       :: #force_inline proc(include     : Code_Include)         -> Str_Builder { return strbuilder_to_string( include_to_strbuilder(include)) }
+friend_to_string        :: #force_inline proc(friend      : Code_Friend)          -> Str_Builder { return strbuilder_to_string( friend_to_strbuilder(friend)) }
+fn_to_string            :: #force_inline proc(fn          : Code_Fn)              -> Str_Builder { return strbuilder_to_string( fn_to_strbuilder(fn)) }
+module_to_string        :: #force_inline proc(module      : Code_Module)          -> Str_Builder { return strbuilder_to_string( module_to_strbuilder(module)) }
+namespace_to_string     :: #force_inline proc(namespace   : Code_NS)              -> Str_Builder { return strbuilder_to_string( namespace_to_strbuilder(namespace)) }
+operator_to_string      :: #force_inline proc(operator    : Code_NS)              -> Str_Builder { return strbuilder_to_string( operator_to_strbuilder(operator)) }
+opcast_to_string        :: #force_inline proc(opcast      : Code_OpCast)          -> Str_Builder { return strbuilder_to_string( opcast_to_strbuilder(opcast)) }
+params_to_string        :: #force_inline proc(params      : Code_Params)          -> Str_Builder { return strbuilder_to_string( params_to_strbuilder(params)) }
+preprocess_to_string    :: #force_inline proc(cond        : Code_Preprocess_Cond) -> Str_Builder { return strbuilder_to_string( preprocess_to_strbuilder(cond)) }
+pragma_to_string        :: #force_inline proc(pragma      : Code_Pragma)          -> Str_Builder { return strbuilder_to_string( pragma_to_strbuilder(pragma)) }
+specifiers_to_string    :: #force_inline proc(specifiers  : Code_Specifiers)      -> Str_Builder { return strbuilder_to_string( specifiers_to_strbuilder(specifiers)) }
+struct_to_string        :: #force_inline proc(code        : Code_Struct)          -> Str_Builder { return strbuilder_to_string( struct_to_string(code)) }
+template_to_string      :: #force_inline proc(template    : Code_Template)        -> Str_Builder { return strbuilder_to_string( template_to_strbuilder(template)) }
+typename_to_string      :: #force_inline proc(typename    : Code_Typename)        -> Str_Builder { return strbuilder_to_string( typename_to_String(typename)) }
+typedef_to_string       :: #force_inline proc(typedef     : Code_Typedef)         -> Str_Builder { return strbuilder_to_string( typedef_to_strbuilder(typedef)) }
+union_to_string         :: #force_inline proc(code        : Code_Union)           -> Str_Builder { return strbuilder_to_string( union_to_strbuilder(code)) }
+var_to_string           :: #force_inline proc(var         : Code_Var)             -> Str_Builder { return strbuilder_to_string( var_to_strbuilder(var)) }
+
+type_str :: proc {
+	code_type_str,
+	attributes_type_str,
+	body_type_str,
+	class_type_str,
+	comment_type_str,
+	define_type_str,
+	define_params_type_str,
+	destructor_type_str,
+	enum_type_str,
+	exec_type_str,
+	extern_type_str,
+	include_type_str,
+	friend_type_str,
+	fn_type_str,
+	module_type_str,
+	namespace_type_str,
+	operator_type_str,
+	opcast_type_str,
+	params_type_str,
+	preproccess_type_str,
+	pragma_type_str,
+	specifiers_type_str,
+	struct_type_str,
+	template_type_str,
+	typename_type_str,
+	typedef_type_str,
+	union_type_str,
+	var_type_str,
+}
+
+attributes_type_str    :: #force_inline proc(self: Code_Attributes)   -> string { return code_type_str(transmute(Code) self) }
+body_type_str          :: #force_inline proc(self: Code_Body)         -> string { return code_type_str(transmute(Code) self) }
+class_type_str         :: #force_inline proc(self: Code_Class)        -> string { return code_type_str(transmute(Code) self) }
+comment_type_str       :: #force_inline proc(self: Code_Comment)      -> string { return code_type_str(transmute(Code) self) }
+define_type_str        :: #force_inline proc(self: Code_Define)       -> string { return code_type_str(transmute(Code) self) }
+define_params_type_str :: #force_inline proc(self: Code_DefineParams) -> string { return code_type_str(transmute(Code) self) }
+destructor_type_str    :: #force_inline proc(self: Code_Destructor)   -> string { return code_type_str(transmute(Code) self) }
+enum_type_str          :: #force_inline proc(self: Code_Enum)         -> string { return code_type_str(transmute(Code) self) }
+exec_type_str          :: #force_inline proc(self: Code_Exec)         -> string { return code_type_str(transmute(Code) self) }
+extern_type_str        :: #force_inline proc(self: Code_Extern)       -> string { return code_type_str(transmute(Code) self) }
+include_type_str       :: #force_inline proc(self: Code_Include)      -> string { return code_type_str(transmute(Code) self) }
+friend_type_str        :: #force_inline proc(self: Code_Friend)       -> string { return code_type_str(transmute(Code) self) }
+fn_type_str            :: #force_inline proc(self: Code_Fn)           -> string { return code_type_str(transmute(Code) self) }
+module_type_str        :: #force_inline proc(self: Code_Module)       -> string { return code_type_str(transmute(Code) self) }
+namespace_type_str     :: #force_inline proc(self: Code_Namespace)    -> string { return code_type_str(transmute(Code) self) }
+operator_type_str      :: #force_inline proc(self: Code_Operator)     -> string { return code_type_str(transmute(Code) self) }
+opcast_type_str        :: #force_inline proc(self: Code_OpCast)       -> string { return code_type_str(transmute(Code) self) }
+params_type_str        :: #force_inline proc(self: Code_Params)       -> string { return code_type_str(transmute(Code) self) }
+preprocess_type_str    :: #force_inline proc(self: Code_Preprocess)   -> string { return code_type_str(transmute(Code) self) }
+pragma_type_str        :: #force_inline proc(self: Code_Pragma)       -> string { return code_type_str(transmute(Code) self) }
+specifiers_type_str    :: #force_inline proc(self: Code_Specifiers)   -> string { return code_type_str(transmute(Code) self) }
+struct_type_str        :: #force_inline proc(self: Code_Struct)       -> string { return code_type_str(transmute(Code) self) }
+template_type_str      :: #force_inline proc(self: Code_Template)     -> string { return code_type_str(transmute(Code) self) }
+typename_type_str      :: #force_inline proc(self: Code_Typename)     -> string { return code_type_str(transmute(Code) self) }
+typedef_type_str       :: #force_inline proc(self: Code_Typedef)      -> string { return code_type_str(transmute(Code) self) }
+union_type_str         :: #force_inline proc(self: Code_Union)        -> string { return code_type_str(transmute(Code) self) }
+var_type_str           :: #force_inline proc(self: Code_Var)          -> string { return code_type_str(transmute(Code) self) }
+
+validate_body :: proc {
+	code__validate_body,
+	body_validate_body,
 }
 
 code_append :: proc(self, other : Code) {
@@ -1416,7 +1777,7 @@ code_set_global :: #force_inline proc(self : Code) {
 	self.parent = Code_Global
 }
 
-code_type_str :: #force_inline proc(self : Code) {
+code_type_str :: #force_inline proc(self : Code) -> string {
 	assert(self != nil)
 	return reflect.enum_name_from_value(self.type)
 }
@@ -1636,6 +1997,7 @@ code_debug_str     :: code__debug_str
 code_duplicate     :: code__duplicate
 code_is_equal      :: code__is_equal
 code_to_strbuilder :: code__to_strbuilder
+code_validate_body :: code__validate_body
 
 operator_to_strbuilder     :: code_op_to_strbuilder
 operator_to_strbuilder_def :: code_op_to_strbuilder_def
@@ -1695,6 +2057,8 @@ foreign gen
 	opcast_to_strbuilder     :: proc(opcast : Code_OpCast) -> Str_Builder ---
 	opcast_to_strbuilder_def :: proc(opcast : Code_OpCast, result : ^Str_Builder) ---
 	opcast_to_strbuilder_fwd :: proc(opcast : Code_OpCast, result : ^Str_Builder) ---
+
+	pragma_to_strbuilder_ref :: proc(pragma : Code_Pragma, result : ^Str_Builder) ---
 
 	preprocess_to_strbuilder :: proc(cond : Code_Preprocess_Cond) -> Str_Builder ---
 
@@ -2839,5 +3203,11 @@ strbuilder_clear :: proc(builder : ^Str_Builder) {
 
 strbiulder_duplicate :: proc(builder : ^Str_Builder, allocator := USE_TEMP_ALLOCATOR) -> StrBuilder {
 	return {}
+}
+
+@(default_calling_convention="c", link_prefix="gen_")
+foreign gen
+{
+
 }
 //#endregion("Backend")

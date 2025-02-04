@@ -8,8 +8,7 @@ An attempt at simple staged metaprogramming for C/C++. Reflect and generate code
 
 TODO: Add splash
 
-The library API is a composition of code element constructors, and a non-standards-compliant single-pass C/C++ parser.  
-These build up a code AST to then serialize with a file builder, or can be traversed for staged-reflection of C/C++ code.
+The library API is a composition of code element constructors, and a non-standards-compliant single-pass C/C++ parser. These build up a code AST to then serialize with a file builder, or can be traversed for staged-reflection of C/C++ code.
 
 ## Notes
 
