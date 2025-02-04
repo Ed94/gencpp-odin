@@ -9,7 +9,7 @@ main :: proc() {
 
 	src_hellope := cpp.builder_open("gen/hellope.c")
 	hellope_var := cpp.parse_variable(
-		"char const* hellope_gencpp_str" = "HELLOPE GENCPP ODIN !"
+		"char const* hellope_gencpp_str = \"HELLOPE GENCPP ODIN !\""
 	)
 	cpp.builder_print(& src_hellope, hellope_var)
 	cpp.builder_write(& src_hellope)
