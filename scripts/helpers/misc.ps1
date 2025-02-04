@@ -18,3 +18,10 @@ function Get-ScriptRepoRoot {
     }
     throw "Unable to find repository root"
 }
+
+function verify-path { param( $path )
+	if (test-path $path) {return $true}
+
+	new-item -ItemType Directory -Path $path
+	return $false
+}
