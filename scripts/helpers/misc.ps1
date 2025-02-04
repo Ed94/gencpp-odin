@@ -1,3 +1,22 @@
+function Get-IniContent { param( [string] $path_file )
+	$ini            = @{}
+	$currentSection = $null
+	switch -regex -file $path_file
+	{
+		"^\[(.+)\]$" {
+			$currentSection       = $matches[1].Trim()
+			$ini[ $currentSection ] = @{}
+		}
+		"^(.+?)\s*=\s*(.*)" {
+			$key, $value = $matches[1].Trim(), $matches[2].Trim()
+			if ($null -ne $currentSection) {
+				$ini[ $currentSection ][ $key ] = $value
+			}
+		}
+	}
+	return $ini
+}
+
 function Get-ScriptRepoRoot {
     $currentPath = $PSScriptRoot
     while ($currentPath -ne $null -and $currentPath -ne "")
