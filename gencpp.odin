@@ -9,7 +9,7 @@
 	|  / ____)                             / ____} |                     | |   / ,_, \    | |{_}        |
 	| | / ___  ___ _ __   ___ _ __  _ __  | {___ | l_ __ _  __ _, ___  __| |  | |   | | __| | _ _ __    |
 	| | |{_  \/ __\ '_ \ / __} '_ l| '_ l  \___ \| __/ _` |/ _` |/ __\/ _` |  | |   | |/ _` || | '_ \   |    
-	| | l__j | ___/ | | | {__; ;_l } ;_l } ____} | l| (_} | {_| | ___j {_; |  | \___/ | {_; || | | | |  |     
+	| | l__j | ___/ | | | {__; ;_l } ;_l } ____} | l| (_} | {_| | ___/ {_; |  | \___/ | {_; || | | | |  |     
 	|  \_____|\___}_l |_|\___} .__/| .__/ {_____/ \__\__/_l\__. |\___/\__,_l   \_____/ \__,_l|_|_l |_|  |
 	|                        | |   | |                      __} |                                       |
 	|                        l_l   l_l                     {___/                                        |
@@ -40,6 +40,7 @@ import   "core:runtime"
                                                                               \▓▓    ▓▓ ▓▓
                                                                                \▓▓▓▓▓▓ \▓▓
 */
+//#region("Enums N Types")
 
 Access_Spec :: enum(u32) {
 	Default,
@@ -51,7 +52,7 @@ Access_Spec :: enum(u32) {
 	Invalid,
 }
 
-access_spec_to_str :: proc(type : Access_Spec) -> string {
+access_spec_to_str :: proc "contextless" (type : Access_Spec) -> string {
 	switch type {
 		case Default:   return ""
 		case Priate:    return "private"
@@ -85,7 +86,7 @@ Module_Flag :: enum(u32) {
 }
 Module_Flags :: bit_set[Module_Flag; u32]
 
-module_flag_to_str :: proc(flag : Module_Flag) -> string {
+module_flag_to_str :: proc "contextless" (flag : Module_Flag) -> string {
 	switch flag {
 		case None:   return "__none__"
 		case Export: return "export"
@@ -176,7 +177,7 @@ Code_Type :: enum(u32) {
 	Variable,
 }
 
-codetype_to_keyword_str :: proc(type : Code_Type) -> string
+codetype_to_keyword_str :: proc "contextless" (type : Code_Type) -> string
 {
 	switch type {
 		case Invalid, Untyped, NewLine:           return "__NA__"
@@ -278,7 +279,7 @@ Operator :: enum(u32)
 	DeleteArray,
 };
 
-operator_to_str :: proc(op : Operator) -> string
+operator_to_str :: proc "contextless" (op : Operator) -> string
 {
 	switch op {
 		case Invalid:         return "INVALID"
@@ -363,7 +364,7 @@ Specifier :: enum(u32)
 	Volatile,
 }
 
-spec_to_str :: proc(spec : Specifier) -> string
+spec_to_str :: proc "contextless" (spec : Specifier) -> string
 {
 	switch(spec) {
 		case Invalid:          return "INVALID"
@@ -397,7 +398,7 @@ spec_to_str :: proc(spec : Specifier) -> string
 	}
 }
 
-spec_is_trailing :: proc(spec : Specifier) -> bool
+spec_is_trailing :: proc "contextless" (spec : Specifier) -> bool
 {
 	switch spec {
 		case Const, Final, NoExceptions, Override, Pure, Delete, Volatile: return true
@@ -508,7 +509,7 @@ Token_Type :: enum(u32)
 	Tok___Attributes_Start,
 }
 
-toktype_to_str :: proc(type : Token_Type) -> string
+toktype_to_str :: proc "contextless" (type : Token_Type) -> string
 {
 	switch type {
 		case Invalid:                   return "INVALID"
@@ -639,15 +640,15 @@ Token :: struct {
 	flags  : TokFlag,
 }
 
-tok_to_access_specifier :: #force_inline proc(tok : Token) -> AccessSpec { return cast(AccessSpec) tok.Type }
-tok_is_valid            :: #force_inline proc(tok : Token) -> bool       { return tok.text != "" && len(tok.text) > 0 && tok.Type != .Invalid }
-tok_is_access_specifier :: #force_inline proc(tok : Token) -> bool       { return .Access_Operator in tok.flags }
-tok_is_attribute        :: #force_inline proc(tok : Token) -> bool       { return .Attribute       in tok.flags }
-tok_is_operator         :: #force_inline proc(tok : Token) -> bool       { return .Operator        in tok.flags }
-tok_is_proprocessor     :: #force_inline proc(tok : Token) -> bool       { return .Preprocess      in tok.flags }
-tok_is_preprocess_cond  :: #force_inline proc(tok : Token) -> bool       { return .Preprocess_Cond in tok.flags }
-tok_is_specifier        :: #force_inline proc(tok : Token) -> bool       { return .Specifier       in tok.flags }
-tok_is_end_definition   :: #force_inline proc(tok : Token) -> bool       { return .End_Definition  in tok.flags }
+tok_to_access_specifier :: #force_inline proc "contextless" (tok : Token) -> AccessSpec { return cast(AccessSpec) tok.Type }
+tok_is_valid            :: #force_inline proc "contextless" (tok : Token) -> bool       { return tok.text != "" && len(tok.text) > 0 && tok.Type != .Invalid }
+tok_is_access_specifier :: #force_inline proc "contextless" (tok : Token) -> bool       { return .Access_Operator in tok.flags }
+tok_is_attribute        :: #force_inline proc "contextless" (tok : Token) -> bool       { return .Attribute       in tok.flags }
+tok_is_operator         :: #force_inline proc "contextless" (tok : Token) -> bool       { return .Operator        in tok.flags }
+tok_is_proprocessor     :: #force_inline proc "contextless" (tok : Token) -> bool       { return .Preprocess      in tok.flags }
+tok_is_preprocess_cond  :: #force_inline proc "contextless" (tok : Token) -> bool       { return .Preprocess_Cond in tok.flags }
+tok_is_specifier        :: #force_inline proc "contextless" (tok : Token) -> bool       { return .Specifier       in tok.flags }
+tok_is_end_definition   :: #force_inline proc "contextless" (tok : Token) -> bool       { return .End_Definition  in tok.flags }
 
 Token_Array :: struct {
 	arr : Array(Token),
@@ -715,8 +716,9 @@ Macro :: struct {
 	flags : Macro_Flags
 }
 
-macro_is_functional :: #force_inline proc(macro : Macro) -> bool { return .Functional   in macro.flags }
-macro_expects_body  :: #force_inline proc(macro : Macro) -> bool { return .Expects_Body in macro.flags }
+macro_is_functional :: #force_inline proc "contextless"(macro : Macro) -> bool { return .Functional   in macro.flags }
+macro_expects_body  :: #force_inline proc "contextless"(macro : Macro) -> bool { return .Expects_Body in macro.flags }
+//#endregion("Enums N Types")
 
 /*
   ______   ______  ________      __    __       ______                 __
@@ -729,6 +731,7 @@ macro_expects_body  :: #force_inline proc(macro : Macro) -> bool { return .Expec
 | ▓▓  | ▓▓\▓▓    ▓▓  | ▓▓       | ▓▓  \▓▓▓     \▓▓    ▓▓\▓▓    ▓▓\▓▓    ▓▓\▓▓     \
  \▓▓   \▓▓ \▓▓▓▓▓▓    \▓▓        \▓▓   \▓▓      \▓▓▓▓▓▓  \▓▓▓▓▓▓  \▓▓▓▓▓▓▓ \▓▓▓▓▓▓▓
 */
+//#region("AST N Code")
 
 Code                 :: distinct ^AST
 Code_Body            :: distinct ^AST_Body
@@ -748,7 +751,7 @@ Code_Fn              :: distinct ^AST_Fn
 Code_Module          :: distinct ^AST_Module
 Code_NS              :: distinct ^AST_NS
 Code_Operator        :: distinct ^AST_Operator
-Code_Op_Cast         :: distinct ^AST_Op_Cast
+Code_OpCast         :: distinct ^AST_Op_Cast
 Code_Params          :: distinct ^AST_Define_Params
 Code_Preprocess_Cond :: distinct ^AST_Preprocess_Cond
 Code_Pragma          :: distinct ^AST_Pragma
@@ -836,6 +839,7 @@ AST :: struct
 		var_parenthesiszed_init : i32,
 	}
 }
+//#endregion("AST N Code")
 
 /*
   ______                 __               ______            __                        ______
@@ -848,6 +852,7 @@ AST :: struct
  \▓▓    ▓▓\▓▓    ▓▓\▓▓    ▓▓\▓▓     \    |   ▓▓ \ ▓▓  | ▓▓  \▓▓  ▓▓\▓▓     \ ▓▓     | ▓▓      \▓▓    ▓▓\▓▓     \\▓▓     \
   \▓▓▓▓▓▓  \▓▓▓▓▓▓  \▓▓▓▓▓▓▓ \▓▓▓▓▓▓▓     \▓▓▓▓▓▓\▓▓   \▓▓   \▓▓▓▓  \▓▓▓▓▓▓▓\▓▓      \▓▓       \▓▓▓▓▓▓▓ \▓▓▓▓▓▓▓ \▓▓▓▓▓▓▓
 */
+//#region("Code Interface")
 
 append :: proc {
 	code_append,
@@ -977,17 +982,72 @@ attributes_to_strbuilder_ref :: #force_inline proc(attributes : Code_Attributes,
 	strbuilder_append_string(result, attributes.content)
 }
 
+body_to_stringbuilder_ref :: proc(body : Code_Body, result : ^Str_Builder) {
+	assert(body != nil)
+	assert(result != nil)
+	curr := body.front
+	left := body.num_entries
+	for left {
+		code__to_strbuilder_ptr
+		left -= 1
+		curr += 1
+	}
+}
+
 comment_to_strbuilder :: #force_inlin proc(comment : Code_Attributes) -> Str_Builder {
 	assert(attributes != nil)
 	dupe := strbuilder_make_str(get_context().temp_allocator, comment.content)
 	return dupe
 }
 
-comment_to_strbuilder_ref :: proc(comment : Code_Comment, builder : ^Str_Builder) {
+comment_to_strbuilder_ref :: #force_inline proc(comment : Code_Comment, builder : ^Str_Builder) {
 	assert(comment != nil)
 	assert(builder != nil)
 	strbuilder_append_string(result, comment.content)
 }
+
+define_to_strbuilder :: proc(define : Code_Define) -> Str_Builder {
+	result := strbuilder_make_reserve(_ctx.allocator_temp, 512)
+	define_to_strbuilder_ref(define, & result)
+	return result
+}
+
+// exec_to_strbuilder :: proc(code : Code_Exec) -> Str_Builder
+// exec_to_strbuilder_ref :: proc(code : Code_Exec, result : ^Str_Builder)
+
+extern_to_strbuilder :: proc(extern : Code_Extern, result : ^Str_Builder) {
+
+}
+
+include_to_strbuilder :: proc(include : Code_Include) -> Str_Builder {
+	return { nil }
+}
+
+include_to_strbuilder_ref :: proc(include : Code_Include, result : ^Str_Builder) {
+
+}
+
+friend_to_strbuilder :: proc(friend : Code_Friend) -> Str_Builder {
+	return { nil }
+}
+
+friend_to_strbuilder_ref :: proc(friend : Code_Friend, result : ^Str_Builder) {
+
+}
+
+module_to_strbuilder :: proc(code : Code_Module) -> Str_Builder {
+	return {nil}
+}
+
+namespace_to_strbuilder :: proc(code : Code_NS) -> Str_Builder {
+	return {nil}
+}
+
+namespace_to_strbuilder :: proc(code : Code_NS, result : ^Str_Builder) {
+
+}
+
+
 
 using_to_strbuilder_ns :: proc(self : Code_Using, builder : ^Str_Builder) {
 	assert(self != nil)
@@ -1304,23 +1364,61 @@ foreign gen
 	body_to_strbuilder_ref    :: proc(body : Code_Body, builder : ^Str_Builder) ---
 	body_to_strbuilder_export :: proc(body : Code_Body, builder : ^Str_Builder) ---
 
-	class_to_strbuilder     :: proc(class : Code_Class) ---
-	class_to_strbuilder_def :: proc(class : Code_Class, builder : ^Str_Builder) ---
+	class_to_strbuilder     :: proc(class : Code_Class) -> Str_Builder ---
 	class_to_strbuilder_fwd :: proc(class : Code_Class, builder : ^Str_Builder) ---
+	class_to_strbuilder_def :: proc(class : Code_Class, builder : ^Str_Builder) ---
 
-	define_params_to_strbuilder :: proc(params : Code_Define_Params) ---
-	define_params_to_strbuilder :: proc(params : Code_Define_Params, builder : ^Str_Builder) ---
+	define_params_to_strbuilder_ref :: proc(params : Code_Define_Params, builder : ^Str_Builder) ---
 
-	params_to_strbuilder     :: proc(params : Code_Params) ---
 	params_to_strbuilder_ref :: proc(params : Code_Params, builder : ^Str_Builder) ---
 
-	specifiers_to_strbuilder     :: proc(specifiers : Code_Specifiers) ---
 	specifiers_to_strbuilder_ref :: proc(specifiers : Code_Specifiers, builder : ^Str_Builder) ---
 
+	struct_to_strbuilder     :: proc(code : Code_Struct) -> Str_Builder ---
+	struct_to_strbuilder_fwd :: proc(code : Code_Struct, result : ^Str_Builder) ---
+	struct_to_strbuilder_def :: proc(code : Code_Sturct, result : ^Str_Builder) ---
 
+	destructor_to_strbuilder     :: proc(code : Code_Destructor) -> Str_Builder ---
+	destructor_to_strbuilder_fwd :: proc(code : Code_Destructor, result : ^Str_Builder) ---
+	destructor_to_strbuilder_def :: proc(code : Code_Destructor, result : ^Str_Builder) ---
+
+	enum_to_strbuilder           :: proc(code : Code_Enum) -> Str_Builder ---
+	enum_to_strbuilder_fwd       :: proc(code : Code_Enum, result : ^Str_Builder) ---
+	enum_to_strbuilder_def       :: proc(code : Code_Enum, result : ^Str_Builder) ---
+	enum_to_strbuilder_class_fwd :: proc(code : Code_Enum, result : ^Str_Builder) ---
+	enum_to_strbuilder_class_def :: proc(code : Code_Enum, result : ^Str_Builder) ---
+
+	fn_to_strbuilder     :: proc(code : Code_Fn) -> Str_Builder ---
+	fn_to_strbuilder_def :: proc(code : Code_Fn, result : ^Str_Builder) ---
+	fn_to_strbuilder_fwd :: proc(code : Code_Fn, result : ^Str_Builder) ---
+
+	module_to_strbuilder_ref :: proc(code : Code_Module, result : ^Str_Builder) ---
+
+	code_op_to_strbuilder     :: proc(operator : Code_Operator) -> Str_Builder ---
+	code_op_to_strbuilder_def :: proc(operator : Code_Operator, result : ^Str_Builder) ---
+	code_op_to_strbuilder_fwd :: proc(operator : Code_Operator, result : ^Str_Builder) ---
+
+	opcast_to_strbuilder     :: proc(opcast : Code_OpCast) -> Str_Builder ---
+	opcast_to_strbuilder_def :: proc(opcast : Code_OpCast, result : ^Str_Builder) ---
+	opcast_to_strbuilder_fwd :: proc(opcast : Code_OpCast, result : ^Str_Builder) ---
+
+	preprocess_to_strbuilder :: proc(cond : Code_Preprocess_Cond) -> Str_Builder ---
+
+	template_to_strbuilder_ref :: proc(template : Code_Template, result : ^Str_Builder) ---
+
+	typename_to_strbuilder_ref :: proc(type : Code_Typename, result : ^Str_Builder) ---
+
+	typedef_to_strbuilder_ref :: proc(typedef : Code_Typedef, result : ^Str_Builder) ---
+
+	union_to_strbuilder     :: proc(code : Code_Union) -> Str_Builder ---
+	union_to_strbuilder_def :: proc(code : Code_Union, result : ^Str_Builder) ---
+	union_to_strbuilder_fwd :: proc(code : Code_Union, result : ^Str_Builder) ---
+
+	using_to_strbuilder_reff :: proc(code : Code_Using, result : ^Str_Builder) ---
 
 	var_to_strbuilder_ref :: proc(self : Code_Var, builder : ^Str_Builder) ---
 }
+//#endregion("Code Interface")
 
 /*
   ______   ______  ________      ________
@@ -1336,6 +1434,7 @@ foreign gen
                                           \▓▓    ▓▓ ▓▓
                                            \▓▓▓▓▓▓ \▓▓
 */
+//#region("AST Types")
 
 AST_Body :: struct {
 	using _ : struct {
@@ -1858,6 +1957,7 @@ AST_Var :: struct {
 	module_flags            : Module_Flags,
 	var_parenthesiszed_init : s32,
 }
+//#endregion("AST Types")
 
 /*
  /      \                       |      \          |  \                      /      \
@@ -1869,6 +1969,7 @@ AST_Var :: struct {
  \▓▓    ▓▓\▓▓     \ ▓▓  | ▓▓    |   ▓▓ \ ▓▓  | ▓▓  \▓▓  ▓▓\▓▓     \ ▓▓     | ▓▓      \▓▓    ▓▓\▓▓     \\▓▓     \
   \▓▓▓▓▓▓  \▓▓▓▓▓▓▓\▓▓   \▓▓     \▓▓▓▓▓▓\▓▓   \▓▓   \▓▓▓▓  \▓▓▓▓▓▓▓\▓▓      \▓▓       \▓▓▓▓▓▓▓ \▓▓▓▓▓▓▓ \▓▓▓▓▓▓▓
 */
+//#region("Gen Interface")
 
 Context :: struct {
 	// Data Allocation
@@ -2060,6 +2161,10 @@ Opts_Def_Enum :: struct {
 	type_macro : Code,
 }
 
+def_enum :: proc() {
+
+}
+
 Opts_Def_Function :: struct {
 	params     : Code_Params,
 	ret_type   : Code_Typename,
@@ -2069,9 +2174,25 @@ Opts_Def_Function :: struct {
 	mflags     : Module_Flags,
 }
 
+def_function :: proc() {
+
+}
+
 Opts_Def_Include   :: struct { is_foreign : b32 } 
 Opts_Def_Module    :: struct { mflags     : Module_Flags }
 Opts_Def_Namespace :: struct { mflags     : Module_Flags }
+
+def_include :: proc() {
+
+}
+
+def_module :: proc() {
+
+}
+
+def_namespace :: proc() {
+
+}
 
 Opts_Def_Operator :: struct {
 	params     : Code_Params,
@@ -2082,7 +2203,11 @@ Opts_Def_Operator :: struct {
 	mflags     : Module_Flags,
 }
 
-Opts_Def_Operator_Cast :: struct {
+def_operator :: proc() {
+
+}
+
+Opts_Def_OpCast :: struct {
 	body  : Code_Body,
 	specs : Code_Specifiers,
 }
@@ -2146,25 +2271,25 @@ foreign gen
 	def_specifier       :: proc() ---
 	def_using_namespace :: proc(name : string) -> Code_Using ---
 
-	def__class         :: proc(name : string,                           opts : Opts_Def_Struct)        -> Code_Class ---
-	def__constructor   :: proc(                                         opts : Opts_Def_Constructor)   -> Code_Constructor ---
-	def__define        :: proc(name : string, type : Macro_Type,        opts : Opts_Def_Define)        -> Code_Define ---
-	def__destructor    :: proc(                                         opts : Opts_Def_Destructor)    -> Code_Destructor ---
-	def__enum          :: proc(name : string,                           opts : Opts_Def_Enum)          -> Code_Enum ---
-	def__function      :: proc(name : string,                           opts : Opts_Def_Function)      -> Code_Fn ---
-	def__include       :: proc(content : string,                        opts : Opts_Def_Include)       -> Code_Include ---
-	def__module        :: proc(name : string,                           opts : Opts_Def_Module)        -> Code_Module ---
-	def__namespace     :: proc(name : string, body : CodeBody,          opts : Opts_Def_Namespace)     -> Code_NS ---
-	def__operator      :: proc(op : Operator, nspace : string,          opts : Opts_Def_Operator)      -> Code_Operator ---
-	def__operator_cast :: proc(type : Code_Typename,                    opts : Opts_Def_Operator_Cast) -> Code_Op_Cast ---
-	def__param         :: proc(type : Code_Typename, name : string,     opts : Opts_Def_Param)         -> Code_Params ---
-	def__struct        :: proc(name : string,                           opts : Opts_Def_Struct)        -> Code_Struct ---
-	def__template      :: proc(params : Code_Params, definition : Code, opts : Opts_Def_Template)      -> Code_Template ---
-	def__type          :: proc(name : string,                           opts : Opts_Def_Type)          -> Code_Typename ---
-	def__typedef       :: proc(name : string, type : Code,              opts : Opts_Def_Typedef)       -> Code_Typedef ---
-	def__using         :: proc(name : string, type : Code_Typename,     opts : Opts_Def_Using)         -> Code_Using ---
-	def__union         :: proc(name : string, body : Code_Body,         opts : Opts_Def_Union)         -> Code_Union ---
-	def__variable      :: proc(type : Code_Typename, name : string,     opts : Opts_Def_Variable)      -> Code_Var ---
+	def__class         :: proc(name : string,                           opts : Opts_Def_Struct)      -> Code_Class ---
+	def__constructor   :: proc(                                         opts : Opts_Def_Constructor) -> Code_Constructor ---
+	def__define        :: proc(name : string, type : Macro_Type,        opts : Opts_Def_Define)      -> Code_Define ---
+	def__destructor    :: proc(                                         opts : Opts_Def_Destructor)  -> Code_Destructor ---
+	def__enum          :: proc(name : string,                           opts : Opts_Def_Enum)        -> Code_Enum ---
+	def__function      :: proc(name : string,                           opts : Opts_Def_Function)    -> Code_Fn ---
+	def__include       :: proc(content : string,                        opts : Opts_Def_Include)     -> Code_Include ---
+	def__module        :: proc(name : string,                           opts : Opts_Def_Module)      -> Code_Module ---
+	def__namespace     :: proc(name : string, body : CodeBody,          opts : Opts_Def_Namespace)   -> Code_NS ---
+	def__operator      :: proc(op : Operator, nspace : string,          opts : Opts_Def_Operator)    -> Code_Operator ---
+	def__operator_cast :: proc(type : Code_Typename,                    opts : Opts_Def_OpCast)      -> Code_OpCast ---
+	def__param         :: proc(type : Code_Typename, name : string,     opts : Opts_Def_Param)       -> Code_Params ---
+	def__struct        :: proc(name : string,                           opts : Opts_Def_Struct)      -> Code_Struct ---
+	def__template      :: proc(params : Code_Params, definition : Code, opts : Opts_Def_Template)    -> Code_Template ---
+	def__type          :: proc(name : string,                           opts : Opts_Def_Type)        -> Code_Typename ---
+	def__typedef       :: proc(name : string, type : Code,              opts : Opts_Def_Typedef)     -> Code_Typedef ---
+	def__using         :: proc(name : string, type : Code_Typename,     opts : Opts_Def_Using)       -> Code_Using ---
+	def__union         :: proc(name : string, body : Code_Body,         opts : Opts_Def_Union)       -> Code_Union ---
+	def__variable      :: proc(type : Code_Typename, name : string,     opts : Opts_Def_Variable)    -> Code_Var ---
 
 	def_class_body_arr       :: proc(num : i32, codes : ^Code) -> Code_Body ---
 	def_define_params_arr    :: proc(num : i32, codes : ^Code) -> Code_Body ---
@@ -2191,7 +2316,7 @@ foreign gen
 	parse_global_body   :: proc(body_def        : string) -> Code_Body ---
 	parse_namespace     :: proc(namespace_def   : string) -> Code_NS ---
 	parse_operator      :: proc(operator_def    : string) -> Code_Operator ---
-	parse_operator_cast :: proc(operator_def    : string) -> Code_Op_Cast ---
+	parse_operator_cast :: proc(operator_def    : string) -> Code_OpCast ---
 	parse_struct        :: proc(struct_def      : string) -> Code_Struct ---
 	parse_template      :: proc(template_def    : string) -> Code_Template ---
 	parse_type          :: proc(type_def        : string) -> Code_Typename ---
@@ -2202,6 +2327,7 @@ foreign gen
 
 	untyped_str :: proc(content : string) -> Code ---
 }
+//#endregion("General Interface")
 
 /*
 $$$$$$$\                      $$\                                 $$\ 
@@ -2213,6 +2339,7 @@ $$ |  $$ |$$  __$$ |$$ |      $$  _$$<  $$   ____|$$ |  $$ |$$ |  $$ |
 $$$$$$$  |\$$$$$$$ |\$$$$$$$\ $$ | \$$\ \$$$$$$$\ $$ |  $$ |\$$$$$$$ |
 \_______/  \_______| \_______|\__|  \__| \_______|\__|  \__| \_______|
 */
+//#region("Backend")
 
 @(default_calling_convention="c", link_prefix="gen_")
 foreign gen
@@ -2381,3 +2508,4 @@ strbuilder_clear :: proc(builder : ^Str_Builder) {
 strbiulder_duplicate :: proc(builder : ^Str_Builder, allocator := USE_TEMP_ALLOCATOR) -> StrBuilder {
 	return {}
 }
+//#endregion("Backend")
