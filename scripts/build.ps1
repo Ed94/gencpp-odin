@@ -89,12 +89,12 @@ if ( $lib )
 
 	. $vendor_toolchain
 
-	$path_bin = join-path $path_gencpp 'bin/win32'
-	verify-path $path_bin
+	$path_lib = join-path $path_gencpp 'lib/win32'
+	verify-path $path_lib
 
 	$includes = @( $path_gencpp )
 	$unit     = join-path $path_gencpp "gencpp_c11.c"
-	$path_lib = join-path $path_bin    "gencpp_c11.lib"
+	$path_lib = join-path $path_lib    "gencpp_c11.lib"
 
 	$compiler_args = @()
 	$compiler_args += $flag_all_c
@@ -102,8 +102,6 @@ if ( $lib )
 	$compiler_args += $flag_c11
 
 	$linker_args = @()
-	write-host "path_lib: $path_lib"
-	write-host "unit    : $unit"
 	$result = build-simple $path_build $includes $compiler_args $linker_args $unit $path_lib
 }
 
