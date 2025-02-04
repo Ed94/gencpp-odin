@@ -3051,6 +3051,1371 @@ gen_static_assert(sizeof(gen_AST_Var) == sizeof(gen_AST), "ERROR: gen_AST_Var is
 
 #pragma endregion AST
 
+#pragma region gen_Array_gen_Arena
+
+#define GEN_GENERIC_SLOT_7__array_init            gen_Arena, gen_Array_gen_Arena_init
+#define GEN_GENERIC_SLOT_7__array_init_reserve    gen_Arena, gen_Array_gen_Arena_init_reserve
+#define GEN_GENERIC_SLOT_7__array_append          gen_Array_gen_Arena, gen_Array_gen_Arena_append
+#define GEN_GENERIC_SLOT_7__array_append_items    gen_Array_gen_Arena, gen_Array_gen_Arena_append_items
+#define GEN_GENERIC_SLOT_7__array_append_at       gen_Array_gen_Arena, gen_Array_gen_Arena_append_at
+#define GEN_GENERIC_SLOT_7__array_append_items_at gen_Array_gen_Arena, gen_Array_gen_Arena_append_items_at
+#define GEN_GENERIC_SLOT_7__array_back            gen_Array_gen_Arena, gen_Array_gen_Arena_back
+#define GEN_GENERIC_SLOT_7__array_clear           gen_Array_gen_Arena, gen_Array_gen_Arena_clear
+#define GEN_GENERIC_SLOT_7__array_fill            gen_Array_gen_Arena, gen_Array_gen_Arena_fill
+#define GEN_GENERIC_SLOT_7__array_free            gen_Array_gen_Arena, gen_Array_gen_Arena_free
+#define GEN_GENERIC_SLOT_7__array_grow            gen_Array_gen_Arena*, gen_Array_gen_Arena_grow
+#define GEN_GENERIC_SLOT_7__array_num             gen_Array_gen_Arena, gen_Array_gen_Arena_num
+#define GEN_GENERIC_SLOT_7__array_pop             gen_Array_gen_Arena, gen_Array_gen_Arena_pop
+#define GEN_GENERIC_SLOT_7__array_remove_at       gen_Array_gen_Arena, gen_Array_gen_Arena_remove_at
+#define GEN_GENERIC_SLOT_7__array_reserve         gen_Array_gen_Arena, gen_Array_gen_Arena_reserve
+#define GEN_GENERIC_SLOT_7__array_resize          gen_Array_gen_Arena, gen_Array_gen_Arena_resize
+#define GEN_GENERIC_SLOT_7__array_set_capacity    gen_Array_gen_Arena*, gen_Array_gen_Arena_set_capacity
+
+typedef gen_Arena*  gen_Array_gen_Arena;
+gen_Array_gen_Arena gen_Array_gen_Arena_init(gen_AllocatorInfo allocator);
+gen_Array_gen_Arena gen_Array_gen_Arena_init_reserve(gen_AllocatorInfo allocator, gen_usize capacity);
+bool                gen_Array_gen_Arena_append_array(gen_Array_gen_Arena* self, gen_Array_gen_Arena other);
+bool                gen_Array_gen_Arena_append(gen_Array_gen_Arena* self, gen_Arena value);
+bool                gen_Array_gen_Arena_append_items(gen_Array_gen_Arena* self, gen_Arena* items, gen_usize item_num);
+bool                gen_Array_gen_Arena_append_at(gen_Array_gen_Arena* self, gen_Arena item, gen_usize idx);
+bool                gen_Array_gen_Arena_append_items_at(gen_Array_gen_Arena* self, gen_Arena* items, gen_usize item_num, gen_usize idx);
+gen_Arena*          gen_Array_gen_Arena_back(gen_Array_gen_Arena self);
+void                gen_Array_gen_Arena_clear(gen_Array_gen_Arena self);
+bool                gen_Array_gen_Arena_fill(gen_Array_gen_Arena self, gen_usize begin, gen_usize end, gen_Arena value);
+void                gen_Array_gen_Arena_free(gen_Array_gen_Arena* self);
+bool                gen_Array_gen_Arena_grow(gen_Array_gen_Arena* self, gen_usize min_capacity);
+gen_usize           gen_Array_gen_Arena_num(gen_Array_gen_Arena self);
+gen_Arena           gen_Array_gen_Arena_pop(gen_Array_gen_Arena self);
+void                gen_Array_gen_Arena_remove_at(gen_Array_gen_Arena self, gen_usize idx);
+bool                gen_Array_gen_Arena_reserve(gen_Array_gen_Arena* self, gen_usize new_capacity);
+bool                gen_Array_gen_Arena_resize(gen_Array_gen_Arena* self, gen_usize num);
+bool                gen_Array_gen_Arena_set_capacity(gen_Array_gen_Arena* self, gen_usize new_capacity);
+
+gen_forceinline gen_Array_gen_Arena gen_Array_gen_Arena_init(gen_AllocatorInfo allocator)
+{
+	size_t initial_size = gen_array_grow_formula(0);
+	return gen_array_init_reserve(gen_Arena, allocator, initial_size);
+}
+
+inline gen_Array_gen_Arena gen_Array_gen_Arena_init_reserve(gen_AllocatorInfo allocator, gen_usize capacity)
+{
+	GEN_ASSERT(capacity > 0);
+	gen_ArrayHeader* header = gen_rcast(gen_ArrayHeader*, gen_alloc(allocator, sizeof(gen_ArrayHeader) + sizeof(gen_Arena) * capacity));
+	if (header == gen_nullptr)
+		return gen_nullptr;
+	header->Allocator = allocator;
+	header->Capacity  = capacity;
+	header->Num       = 0;
+	return gen_rcast(gen_Arena*, header + 1);
+}
+
+gen_forceinline bool gen_Array_gen_Arena_append_array(gen_Array_gen_Arena* self, gen_Array_gen_Arena other)
+{
+	return gen_array_append_items(*self, (gen_Array_gen_Arena)other, gen_Array_gen_Arena_num(other));
+}
+
+inline bool gen_Array_gen_Arena_append(gen_Array_gen_Arena* self, gen_Arena value)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	GEN_ASSERT(*self != gen_nullptr);
+	gen_ArrayHeader* header = gen_array_get_header(*self);
+	if (header->Num == header->Capacity)
+	{
+		if (! gen_array_grow(self, header->Capacity))
+			return false;
+		header = gen_array_get_header(*self);
+	}
+	(*self)[header->Num] = value;
+	header->Num++;
+	return true;
+}
+
+inline bool gen_Array_gen_Arena_append_items(gen_Array_gen_Arena* self, gen_Arena* items, gen_usize item_num)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	GEN_ASSERT(*self != gen_nullptr);
+	GEN_ASSERT(items != gen_nullptr);
+	GEN_ASSERT(item_num > 0);
+	gen_ArrayHeader* header = gen_array_get_header(*self);
+	if (header->Num + item_num > header->Capacity)
+	{
+		if (! gen_array_grow(self, header->Capacity + item_num))
+			return false;
+		header = gen_array_get_header(*self);
+	}
+	gen_mem_copy((*self) + header->Num, items, sizeof(gen_Arena) * item_num);
+	header->Num += item_num;
+	return true;
+}
+
+inline bool gen_Array_gen_Arena_append_at(gen_Array_gen_Arena* self, gen_Arena item, gen_usize idx)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	GEN_ASSERT(*self != gen_nullptr);
+	gen_ArrayHeader* header = gen_array_get_header(*self);
+	if (idx >= header->Num)
+		idx = header->Num - 1;
+	if (idx < 0)
+		idx = 0;
+	if (header->Capacity < header->Num + 1)
+	{
+		if (! gen_array_grow(self, header->Capacity + 1))
+			return false;
+		header = gen_array_get_header(*self);
+	}
+	gen_Array_gen_Arena target = (*self) + idx;
+	gen_mem_move(target + 1, target, (header->Num - idx) * sizeof(gen_Arena));
+	header->Num++;
+	return true;
+}
+
+inline bool gen_Array_gen_Arena_append_items_at(gen_Array_gen_Arena* self, gen_Arena* items, gen_usize item_num, gen_usize idx)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	GEN_ASSERT(*self != gen_nullptr);
+	gen_ArrayHeader* header = gen_array_get_header(*self);
+	if (idx >= header->Num)
+	{
+		return gen_array_append_items(*self, items, item_num);
+	}
+	if (item_num > header->Capacity)
+	{
+		if (! gen_array_grow(self, item_num + header->Capacity))
+			return false;
+		header = gen_array_get_header(*self);
+	}
+	gen_Arena* target = (*self) + idx + item_num;
+	gen_Arena* src    = (*self) + idx;
+	gen_mem_move(target, src, (header->Num - idx) * sizeof(gen_Arena));
+	gen_mem_copy(src, items, item_num * sizeof(gen_Arena));
+	header->Num += item_num;
+	return true;
+}
+
+inline gen_Arena* gen_Array_gen_Arena_back(gen_Array_gen_Arena self)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	gen_ArrayHeader* header = gen_array_get_header(self);
+	if (header->Num == 0)
+		return 0;
+	return self + header->Num - 1;
+}
+
+inline void gen_Array_gen_Arena_clear(gen_Array_gen_Arena self)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	gen_ArrayHeader* header = gen_array_get_header(self);
+	header->Num             = 0;
+}
+
+inline bool gen_Array_gen_Arena_fill(gen_Array_gen_Arena self, gen_usize begin, gen_usize end, gen_Arena value)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	GEN_ASSERT(begin <= end);
+	gen_ArrayHeader* header = gen_array_get_header(self);
+	if (begin < 0 || end > header->Num)
+		return false;
+	for (gen_ssize idx = (gen_ssize)begin; idx < (gen_ssize)end; idx++)
+		self[idx] = value;
+	return true;
+}
+
+inline void gen_Array_gen_Arena_free(gen_Array_gen_Arena* self)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	GEN_ASSERT(*self != gen_nullptr);
+	gen_ArrayHeader* header = gen_array_get_header(*self);
+	gen_allocator_free(header->Allocator, header);
+	self = 0;
+}
+
+inline bool gen_Array_gen_Arena_grow(gen_Array_gen_Arena* self, gen_usize min_capacity)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	GEN_ASSERT(*self != gen_nullptr);
+	GEN_ASSERT(min_capacity > 0);
+	gen_ArrayHeader* header       = gen_array_get_header(*self);
+	gen_usize        new_capacity = gen_array_grow_formula(header->Capacity);
+	if (new_capacity < min_capacity)
+		new_capacity = min_capacity;
+	return gen_array_set_capacity(self, new_capacity);
+}
+
+gen_forceinline gen_usize gen_Array_gen_Arena_num(gen_Array_gen_Arena self)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	return gen_array_get_header(self)->Num;
+}
+
+inline gen_Arena gen_Array_gen_Arena_pop(gen_Array_gen_Arena self)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	gen_ArrayHeader* header = gen_array_get_header(self);
+	GEN_ASSERT(header->Num > 0);
+	gen_Arena result = self[header->Num - 1];
+	header->Num--;
+	return result;
+}
+
+gen_forceinline void gen_Array_gen_Arena_remove_at(gen_Array_gen_Arena self, gen_usize idx)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	gen_ArrayHeader* header = gen_array_get_header(self);
+	GEN_ASSERT(idx < header->Num);
+	gen_mem_move(self + idx, self + idx + 1, sizeof(gen_Arena) * (header->Num - idx - 1));
+	header->Num--;
+}
+
+inline bool gen_Array_gen_Arena_reserve(gen_Array_gen_Arena* self, gen_usize new_capacity)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	GEN_ASSERT(*self != gen_nullptr);
+	GEN_ASSERT(new_capacity > 0);
+	gen_ArrayHeader* header = gen_array_get_header(*self);
+	if (header->Capacity < new_capacity)
+		return gen_array_set_capacity(self, new_capacity);
+	return true;
+}
+
+inline bool gen_Array_gen_Arena_resize(gen_Array_gen_Arena* self, gen_usize num)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	GEN_ASSERT(*self != gen_nullptr);
+	GEN_ASSERT(num > 0);
+	gen_ArrayHeader* header = gen_array_get_header(*self);
+	if (header->Capacity < num)
+	{
+		if (! gen_array_grow(self, num))
+			return false;
+		header = gen_array_get_header(*self);
+	}
+	header->Num = num;
+	return true;
+}
+
+inline bool gen_Array_gen_Arena_set_capacity(gen_Array_gen_Arena* self, gen_usize new_capacity)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	GEN_ASSERT(*self != gen_nullptr);
+	GEN_ASSERT(new_capacity > 0);
+	gen_ArrayHeader* header = gen_array_get_header(*self);
+	if (new_capacity == header->Capacity)
+		return true;
+	if (new_capacity < header->Num)
+	{
+		header->Num = new_capacity;
+		return true;
+	}
+	gen_usize        size       = sizeof(gen_ArrayHeader) + sizeof(gen_Arena) * new_capacity;
+	gen_ArrayHeader* new_header = gen_cast(gen_ArrayHeader*, gen_alloc(header->Allocator, size));
+	if (new_header == 0)
+		return false;
+	gen_mem_move(new_header, header, sizeof(gen_ArrayHeader) + sizeof(gen_Arena) * header->Num);
+	new_header->Capacity = new_capacity;
+	gen_allocator_free(header->Allocator, &header);
+	*self = gen_cast(gen_Arena*, new_header + 1);
+	return true;
+}
+
+#pragma endregion gen_Array_gen_Arena
+
+#pragma region gen_Array_gen_Pool
+
+#define GEN_GENERIC_SLOT_8__array_init            gen_Pool, gen_Array_gen_Pool_init
+#define GEN_GENERIC_SLOT_8__array_init_reserve    gen_Pool, gen_Array_gen_Pool_init_reserve
+#define GEN_GENERIC_SLOT_8__array_append          gen_Array_gen_Pool, gen_Array_gen_Pool_append
+#define GEN_GENERIC_SLOT_8__array_append_items    gen_Array_gen_Pool, gen_Array_gen_Pool_append_items
+#define GEN_GENERIC_SLOT_8__array_append_at       gen_Array_gen_Pool, gen_Array_gen_Pool_append_at
+#define GEN_GENERIC_SLOT_8__array_append_items_at gen_Array_gen_Pool, gen_Array_gen_Pool_append_items_at
+#define GEN_GENERIC_SLOT_8__array_back            gen_Array_gen_Pool, gen_Array_gen_Pool_back
+#define GEN_GENERIC_SLOT_8__array_clear           gen_Array_gen_Pool, gen_Array_gen_Pool_clear
+#define GEN_GENERIC_SLOT_8__array_fill            gen_Array_gen_Pool, gen_Array_gen_Pool_fill
+#define GEN_GENERIC_SLOT_8__array_free            gen_Array_gen_Pool, gen_Array_gen_Pool_free
+#define GEN_GENERIC_SLOT_8__array_grow            gen_Array_gen_Pool*, gen_Array_gen_Pool_grow
+#define GEN_GENERIC_SLOT_8__array_num             gen_Array_gen_Pool, gen_Array_gen_Pool_num
+#define GEN_GENERIC_SLOT_8__array_pop             gen_Array_gen_Pool, gen_Array_gen_Pool_pop
+#define GEN_GENERIC_SLOT_8__array_remove_at       gen_Array_gen_Pool, gen_Array_gen_Pool_remove_at
+#define GEN_GENERIC_SLOT_8__array_reserve         gen_Array_gen_Pool, gen_Array_gen_Pool_reserve
+#define GEN_GENERIC_SLOT_8__array_resize          gen_Array_gen_Pool, gen_Array_gen_Pool_resize
+#define GEN_GENERIC_SLOT_8__array_set_capacity    gen_Array_gen_Pool*, gen_Array_gen_Pool_set_capacity
+
+typedef gen_Pool*  gen_Array_gen_Pool;
+gen_Array_gen_Pool gen_Array_gen_Pool_init(gen_AllocatorInfo allocator);
+gen_Array_gen_Pool gen_Array_gen_Pool_init_reserve(gen_AllocatorInfo allocator, gen_usize capacity);
+bool               gen_Array_gen_Pool_append_array(gen_Array_gen_Pool* self, gen_Array_gen_Pool other);
+bool               gen_Array_gen_Pool_append(gen_Array_gen_Pool* self, gen_Pool value);
+bool               gen_Array_gen_Pool_append_items(gen_Array_gen_Pool* self, gen_Pool* items, gen_usize item_num);
+bool               gen_Array_gen_Pool_append_at(gen_Array_gen_Pool* self, gen_Pool item, gen_usize idx);
+bool               gen_Array_gen_Pool_append_items_at(gen_Array_gen_Pool* self, gen_Pool* items, gen_usize item_num, gen_usize idx);
+gen_Pool*          gen_Array_gen_Pool_back(gen_Array_gen_Pool self);
+void               gen_Array_gen_Pool_clear(gen_Array_gen_Pool self);
+bool               gen_Array_gen_Pool_fill(gen_Array_gen_Pool self, gen_usize begin, gen_usize end, gen_Pool value);
+void               gen_Array_gen_Pool_free(gen_Array_gen_Pool* self);
+bool               gen_Array_gen_Pool_grow(gen_Array_gen_Pool* self, gen_usize min_capacity);
+gen_usize          gen_Array_gen_Pool_num(gen_Array_gen_Pool self);
+gen_Pool           gen_Array_gen_Pool_pop(gen_Array_gen_Pool self);
+void               gen_Array_gen_Pool_remove_at(gen_Array_gen_Pool self, gen_usize idx);
+bool               gen_Array_gen_Pool_reserve(gen_Array_gen_Pool* self, gen_usize new_capacity);
+bool               gen_Array_gen_Pool_resize(gen_Array_gen_Pool* self, gen_usize num);
+bool               gen_Array_gen_Pool_set_capacity(gen_Array_gen_Pool* self, gen_usize new_capacity);
+
+gen_forceinline gen_Array_gen_Pool gen_Array_gen_Pool_init(gen_AllocatorInfo allocator)
+{
+	size_t initial_size = gen_array_grow_formula(0);
+	return gen_array_init_reserve(gen_Pool, allocator, initial_size);
+}
+
+inline gen_Array_gen_Pool gen_Array_gen_Pool_init_reserve(gen_AllocatorInfo allocator, gen_usize capacity)
+{
+	GEN_ASSERT(capacity > 0);
+	gen_ArrayHeader* header = gen_rcast(gen_ArrayHeader*, gen_alloc(allocator, sizeof(gen_ArrayHeader) + sizeof(gen_Pool) * capacity));
+	if (header == gen_nullptr)
+		return gen_nullptr;
+	header->Allocator = allocator;
+	header->Capacity  = capacity;
+	header->Num       = 0;
+	return gen_rcast(gen_Pool*, header + 1);
+}
+
+gen_forceinline bool gen_Array_gen_Pool_append_array(gen_Array_gen_Pool* self, gen_Array_gen_Pool other)
+{
+	return gen_array_append_items(*self, (gen_Array_gen_Pool)other, gen_Array_gen_Pool_num(other));
+}
+
+inline bool gen_Array_gen_Pool_append(gen_Array_gen_Pool* self, gen_Pool value)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	GEN_ASSERT(*self != gen_nullptr);
+	gen_ArrayHeader* header = gen_array_get_header(*self);
+	if (header->Num == header->Capacity)
+	{
+		if (! gen_array_grow(self, header->Capacity))
+			return false;
+		header = gen_array_get_header(*self);
+	}
+	(*self)[header->Num] = value;
+	header->Num++;
+	return true;
+}
+
+inline bool gen_Array_gen_Pool_append_items(gen_Array_gen_Pool* self, gen_Pool* items, gen_usize item_num)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	GEN_ASSERT(*self != gen_nullptr);
+	GEN_ASSERT(items != gen_nullptr);
+	GEN_ASSERT(item_num > 0);
+	gen_ArrayHeader* header = gen_array_get_header(*self);
+	if (header->Num + item_num > header->Capacity)
+	{
+		if (! gen_array_grow(self, header->Capacity + item_num))
+			return false;
+		header = gen_array_get_header(*self);
+	}
+	gen_mem_copy((*self) + header->Num, items, sizeof(gen_Pool) * item_num);
+	header->Num += item_num;
+	return true;
+}
+
+inline bool gen_Array_gen_Pool_append_at(gen_Array_gen_Pool* self, gen_Pool item, gen_usize idx)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	GEN_ASSERT(*self != gen_nullptr);
+	gen_ArrayHeader* header = gen_array_get_header(*self);
+	if (idx >= header->Num)
+		idx = header->Num - 1;
+	if (idx < 0)
+		idx = 0;
+	if (header->Capacity < header->Num + 1)
+	{
+		if (! gen_array_grow(self, header->Capacity + 1))
+			return false;
+		header = gen_array_get_header(*self);
+	}
+	gen_Array_gen_Pool target = (*self) + idx;
+	gen_mem_move(target + 1, target, (header->Num - idx) * sizeof(gen_Pool));
+	header->Num++;
+	return true;
+}
+
+inline bool gen_Array_gen_Pool_append_items_at(gen_Array_gen_Pool* self, gen_Pool* items, gen_usize item_num, gen_usize idx)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	GEN_ASSERT(*self != gen_nullptr);
+	gen_ArrayHeader* header = gen_array_get_header(*self);
+	if (idx >= header->Num)
+	{
+		return gen_array_append_items(*self, items, item_num);
+	}
+	if (item_num > header->Capacity)
+	{
+		if (! gen_array_grow(self, item_num + header->Capacity))
+			return false;
+		header = gen_array_get_header(*self);
+	}
+	gen_Pool* target = (*self) + idx + item_num;
+	gen_Pool* src    = (*self) + idx;
+	gen_mem_move(target, src, (header->Num - idx) * sizeof(gen_Pool));
+	gen_mem_copy(src, items, item_num * sizeof(gen_Pool));
+	header->Num += item_num;
+	return true;
+}
+
+inline gen_Pool* gen_Array_gen_Pool_back(gen_Array_gen_Pool self)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	gen_ArrayHeader* header = gen_array_get_header(self);
+	if (header->Num == 0)
+		return 0;
+	return self + header->Num - 1;
+}
+
+inline void gen_Array_gen_Pool_clear(gen_Array_gen_Pool self)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	gen_ArrayHeader* header = gen_array_get_header(self);
+	header->Num             = 0;
+}
+
+inline bool gen_Array_gen_Pool_fill(gen_Array_gen_Pool self, gen_usize begin, gen_usize end, gen_Pool value)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	GEN_ASSERT(begin <= end);
+	gen_ArrayHeader* header = gen_array_get_header(self);
+	if (begin < 0 || end > header->Num)
+		return false;
+	for (gen_ssize idx = (gen_ssize)begin; idx < (gen_ssize)end; idx++)
+		self[idx] = value;
+	return true;
+}
+
+inline void gen_Array_gen_Pool_free(gen_Array_gen_Pool* self)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	GEN_ASSERT(*self != gen_nullptr);
+	gen_ArrayHeader* header = gen_array_get_header(*self);
+	gen_allocator_free(header->Allocator, header);
+	self = 0;
+}
+
+inline bool gen_Array_gen_Pool_grow(gen_Array_gen_Pool* self, gen_usize min_capacity)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	GEN_ASSERT(*self != gen_nullptr);
+	GEN_ASSERT(min_capacity > 0);
+	gen_ArrayHeader* header       = gen_array_get_header(*self);
+	gen_usize        new_capacity = gen_array_grow_formula(header->Capacity);
+	if (new_capacity < min_capacity)
+		new_capacity = min_capacity;
+	return gen_array_set_capacity(self, new_capacity);
+}
+
+gen_forceinline gen_usize gen_Array_gen_Pool_num(gen_Array_gen_Pool self)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	return gen_array_get_header(self)->Num;
+}
+
+inline gen_Pool gen_Array_gen_Pool_pop(gen_Array_gen_Pool self)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	gen_ArrayHeader* header = gen_array_get_header(self);
+	GEN_ASSERT(header->Num > 0);
+	gen_Pool result = self[header->Num - 1];
+	header->Num--;
+	return result;
+}
+
+gen_forceinline void gen_Array_gen_Pool_remove_at(gen_Array_gen_Pool self, gen_usize idx)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	gen_ArrayHeader* header = gen_array_get_header(self);
+	GEN_ASSERT(idx < header->Num);
+	gen_mem_move(self + idx, self + idx + 1, sizeof(gen_Pool) * (header->Num - idx - 1));
+	header->Num--;
+}
+
+inline bool gen_Array_gen_Pool_reserve(gen_Array_gen_Pool* self, gen_usize new_capacity)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	GEN_ASSERT(*self != gen_nullptr);
+	GEN_ASSERT(new_capacity > 0);
+	gen_ArrayHeader* header = gen_array_get_header(*self);
+	if (header->Capacity < new_capacity)
+		return gen_array_set_capacity(self, new_capacity);
+	return true;
+}
+
+inline bool gen_Array_gen_Pool_resize(gen_Array_gen_Pool* self, gen_usize num)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	GEN_ASSERT(*self != gen_nullptr);
+	GEN_ASSERT(num > 0);
+	gen_ArrayHeader* header = gen_array_get_header(*self);
+	if (header->Capacity < num)
+	{
+		if (! gen_array_grow(self, num))
+			return false;
+		header = gen_array_get_header(*self);
+	}
+	header->Num = num;
+	return true;
+}
+
+inline bool gen_Array_gen_Pool_set_capacity(gen_Array_gen_Pool* self, gen_usize new_capacity)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	GEN_ASSERT(*self != gen_nullptr);
+	GEN_ASSERT(new_capacity > 0);
+	gen_ArrayHeader* header = gen_array_get_header(*self);
+	if (new_capacity == header->Capacity)
+		return true;
+	if (new_capacity < header->Num)
+	{
+		header->Num = new_capacity;
+		return true;
+	}
+	gen_usize        size       = sizeof(gen_ArrayHeader) + sizeof(gen_Pool) * new_capacity;
+	gen_ArrayHeader* new_header = gen_cast(gen_ArrayHeader*, gen_alloc(header->Allocator, size));
+	if (new_header == 0)
+		return false;
+	gen_mem_move(new_header, header, sizeof(gen_ArrayHeader) + sizeof(gen_Pool) * header->Num);
+	new_header->Capacity = new_capacity;
+	gen_allocator_free(header->Allocator, &header);
+	*self = gen_cast(gen_Pool*, new_header + 1);
+	return true;
+}
+
+#pragma endregion gen_Array_gen_Pool
+
+#pragma region gen_Array_gen_StrCached
+
+#define GEN_GENERIC_SLOT_2__array_init            gen_StrCached, gen_Array_gen_StrCached_init
+#define GEN_GENERIC_SLOT_2__array_init_reserve    gen_StrCached, gen_Array_gen_StrCached_init_reserve
+#define GEN_GENERIC_SLOT_2__array_append          gen_Array_gen_StrCached, gen_Array_gen_StrCached_append
+#define GEN_GENERIC_SLOT_2__array_append_items    gen_Array_gen_StrCached, gen_Array_gen_StrCached_append_items
+#define GEN_GENERIC_SLOT_2__array_append_at       gen_Array_gen_StrCached, gen_Array_gen_StrCached_append_at
+#define GEN_GENERIC_SLOT_2__array_append_items_at gen_Array_gen_StrCached, gen_Array_gen_StrCached_append_items_at
+#define GEN_GENERIC_SLOT_2__array_back            gen_Array_gen_StrCached, gen_Array_gen_StrCached_back
+#define GEN_GENERIC_SLOT_2__array_clear           gen_Array_gen_StrCached, gen_Array_gen_StrCached_clear
+#define GEN_GENERIC_SLOT_2__array_fill            gen_Array_gen_StrCached, gen_Array_gen_StrCached_fill
+#define GEN_GENERIC_SLOT_2__array_free            gen_Array_gen_StrCached, gen_Array_gen_StrCached_free
+#define GEN_GENERIC_SLOT_2__array_grow            gen_Array_gen_StrCached*, gen_Array_gen_StrCached_grow
+#define GEN_GENERIC_SLOT_2__array_num             gen_Array_gen_StrCached, gen_Array_gen_StrCached_num
+#define GEN_GENERIC_SLOT_2__array_pop             gen_Array_gen_StrCached, gen_Array_gen_StrCached_pop
+#define GEN_GENERIC_SLOT_2__array_remove_at       gen_Array_gen_StrCached, gen_Array_gen_StrCached_remove_at
+#define GEN_GENERIC_SLOT_2__array_reserve         gen_Array_gen_StrCached, gen_Array_gen_StrCached_reserve
+#define GEN_GENERIC_SLOT_2__array_resize          gen_Array_gen_StrCached, gen_Array_gen_StrCached_resize
+#define GEN_GENERIC_SLOT_2__array_set_capacity    gen_Array_gen_StrCached*, gen_Array_gen_StrCached_set_capacity
+
+typedef gen_StrCached*  gen_Array_gen_StrCached;
+gen_Array_gen_StrCached gen_Array_gen_StrCached_init(gen_AllocatorInfo allocator);
+gen_Array_gen_StrCached gen_Array_gen_StrCached_init_reserve(gen_AllocatorInfo allocator, gen_usize capacity);
+bool                    gen_Array_gen_StrCached_append_array(gen_Array_gen_StrCached* self, gen_Array_gen_StrCached other);
+bool                    gen_Array_gen_StrCached_append(gen_Array_gen_StrCached* self, gen_StrCached value);
+bool                    gen_Array_gen_StrCached_append_items(gen_Array_gen_StrCached* self, gen_StrCached* items, gen_usize item_num);
+bool                    gen_Array_gen_StrCached_append_at(gen_Array_gen_StrCached* self, gen_StrCached item, gen_usize idx);
+bool                    gen_Array_gen_StrCached_append_items_at(gen_Array_gen_StrCached* self, gen_StrCached* items, gen_usize item_num, gen_usize idx);
+gen_StrCached*          gen_Array_gen_StrCached_back(gen_Array_gen_StrCached self);
+void                    gen_Array_gen_StrCached_clear(gen_Array_gen_StrCached self);
+bool                    gen_Array_gen_StrCached_fill(gen_Array_gen_StrCached self, gen_usize begin, gen_usize end, gen_StrCached value);
+void                    gen_Array_gen_StrCached_free(gen_Array_gen_StrCached* self);
+bool                    gen_Array_gen_StrCached_grow(gen_Array_gen_StrCached* self, gen_usize min_capacity);
+gen_usize               gen_Array_gen_StrCached_num(gen_Array_gen_StrCached self);
+gen_StrCached           gen_Array_gen_StrCached_pop(gen_Array_gen_StrCached self);
+void                    gen_Array_gen_StrCached_remove_at(gen_Array_gen_StrCached self, gen_usize idx);
+bool                    gen_Array_gen_StrCached_reserve(gen_Array_gen_StrCached* self, gen_usize new_capacity);
+bool                    gen_Array_gen_StrCached_resize(gen_Array_gen_StrCached* self, gen_usize num);
+bool                    gen_Array_gen_StrCached_set_capacity(gen_Array_gen_StrCached* self, gen_usize new_capacity);
+
+gen_forceinline gen_Array_gen_StrCached gen_Array_gen_StrCached_init(gen_AllocatorInfo allocator)
+{
+	size_t initial_size = gen_array_grow_formula(0);
+	return gen_array_init_reserve(gen_StrCached, allocator, initial_size);
+}
+
+inline gen_Array_gen_StrCached gen_Array_gen_StrCached_init_reserve(gen_AllocatorInfo allocator, gen_usize capacity)
+{
+	GEN_ASSERT(capacity > 0);
+	gen_ArrayHeader* header = gen_rcast(gen_ArrayHeader*, gen_alloc(allocator, sizeof(gen_ArrayHeader) + sizeof(gen_StrCached) * capacity));
+	if (header == gen_nullptr)
+		return gen_nullptr;
+	header->Allocator = allocator;
+	header->Capacity  = capacity;
+	header->Num       = 0;
+	return gen_rcast(gen_StrCached*, header + 1);
+}
+
+gen_forceinline bool gen_Array_gen_StrCached_append_array(gen_Array_gen_StrCached* self, gen_Array_gen_StrCached other)
+{
+	return gen_array_append_items(*self, (gen_Array_gen_StrCached)other, gen_Array_gen_StrCached_num(other));
+}
+
+inline bool gen_Array_gen_StrCached_append(gen_Array_gen_StrCached* self, gen_StrCached value)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	GEN_ASSERT(*self != gen_nullptr);
+	gen_ArrayHeader* header = gen_array_get_header(*self);
+	if (header->Num == header->Capacity)
+	{
+		if (! gen_array_grow(self, header->Capacity))
+			return false;
+		header = gen_array_get_header(*self);
+	}
+	(*self)[header->Num] = value;
+	header->Num++;
+	return true;
+}
+
+inline bool gen_Array_gen_StrCached_append_items(gen_Array_gen_StrCached* self, gen_StrCached* items, gen_usize item_num)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	GEN_ASSERT(*self != gen_nullptr);
+	GEN_ASSERT(items != gen_nullptr);
+	GEN_ASSERT(item_num > 0);
+	gen_ArrayHeader* header = gen_array_get_header(*self);
+	if (header->Num + item_num > header->Capacity)
+	{
+		if (! gen_array_grow(self, header->Capacity + item_num))
+			return false;
+		header = gen_array_get_header(*self);
+	}
+	gen_mem_copy((*self) + header->Num, items, sizeof(gen_StrCached) * item_num);
+	header->Num += item_num;
+	return true;
+}
+
+inline bool gen_Array_gen_StrCached_append_at(gen_Array_gen_StrCached* self, gen_StrCached item, gen_usize idx)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	GEN_ASSERT(*self != gen_nullptr);
+	gen_ArrayHeader* header = gen_array_get_header(*self);
+	if (idx >= header->Num)
+		idx = header->Num - 1;
+	if (idx < 0)
+		idx = 0;
+	if (header->Capacity < header->Num + 1)
+	{
+		if (! gen_array_grow(self, header->Capacity + 1))
+			return false;
+		header = gen_array_get_header(*self);
+	}
+	gen_Array_gen_StrCached target = (*self) + idx;
+	gen_mem_move(target + 1, target, (header->Num - idx) * sizeof(gen_StrCached));
+	header->Num++;
+	return true;
+}
+
+inline bool gen_Array_gen_StrCached_append_items_at(gen_Array_gen_StrCached* self, gen_StrCached* items, gen_usize item_num, gen_usize idx)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	GEN_ASSERT(*self != gen_nullptr);
+	gen_ArrayHeader* header = gen_array_get_header(*self);
+	if (idx >= header->Num)
+	{
+		return gen_array_append_items(*self, items, item_num);
+	}
+	if (item_num > header->Capacity)
+	{
+		if (! gen_array_grow(self, item_num + header->Capacity))
+			return false;
+		header = gen_array_get_header(*self);
+	}
+	gen_StrCached* target = (*self) + idx + item_num;
+	gen_StrCached* src    = (*self) + idx;
+	gen_mem_move(target, src, (header->Num - idx) * sizeof(gen_StrCached));
+	gen_mem_copy(src, items, item_num * sizeof(gen_StrCached));
+	header->Num += item_num;
+	return true;
+}
+
+inline gen_StrCached* gen_Array_gen_StrCached_back(gen_Array_gen_StrCached self)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	gen_ArrayHeader* header = gen_array_get_header(self);
+	if (header->Num == 0)
+		return 0;
+	return self + header->Num - 1;
+}
+
+inline void gen_Array_gen_StrCached_clear(gen_Array_gen_StrCached self)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	gen_ArrayHeader* header = gen_array_get_header(self);
+	header->Num             = 0;
+}
+
+inline bool gen_Array_gen_StrCached_fill(gen_Array_gen_StrCached self, gen_usize begin, gen_usize end, gen_StrCached value)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	GEN_ASSERT(begin <= end);
+	gen_ArrayHeader* header = gen_array_get_header(self);
+	if (begin < 0 || end > header->Num)
+		return false;
+	for (gen_ssize idx = (gen_ssize)begin; idx < (gen_ssize)end; idx++)
+		self[idx] = value;
+	return true;
+}
+
+inline void gen_Array_gen_StrCached_free(gen_Array_gen_StrCached* self)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	GEN_ASSERT(*self != gen_nullptr);
+	gen_ArrayHeader* header = gen_array_get_header(*self);
+	gen_allocator_free(header->Allocator, header);
+	self = 0;
+}
+
+inline bool gen_Array_gen_StrCached_grow(gen_Array_gen_StrCached* self, gen_usize min_capacity)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	GEN_ASSERT(*self != gen_nullptr);
+	GEN_ASSERT(min_capacity > 0);
+	gen_ArrayHeader* header       = gen_array_get_header(*self);
+	gen_usize        new_capacity = gen_array_grow_formula(header->Capacity);
+	if (new_capacity < min_capacity)
+		new_capacity = min_capacity;
+	return gen_array_set_capacity(self, new_capacity);
+}
+
+gen_forceinline gen_usize gen_Array_gen_StrCached_num(gen_Array_gen_StrCached self)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	return gen_array_get_header(self)->Num;
+}
+
+inline gen_StrCached gen_Array_gen_StrCached_pop(gen_Array_gen_StrCached self)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	gen_ArrayHeader* header = gen_array_get_header(self);
+	GEN_ASSERT(header->Num > 0);
+	gen_StrCached result = self[header->Num - 1];
+	header->Num--;
+	return result;
+}
+
+gen_forceinline void gen_Array_gen_StrCached_remove_at(gen_Array_gen_StrCached self, gen_usize idx)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	gen_ArrayHeader* header = gen_array_get_header(self);
+	GEN_ASSERT(idx < header->Num);
+	gen_mem_move(self + idx, self + idx + 1, sizeof(gen_StrCached) * (header->Num - idx - 1));
+	header->Num--;
+}
+
+inline bool gen_Array_gen_StrCached_reserve(gen_Array_gen_StrCached* self, gen_usize new_capacity)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	GEN_ASSERT(*self != gen_nullptr);
+	GEN_ASSERT(new_capacity > 0);
+	gen_ArrayHeader* header = gen_array_get_header(*self);
+	if (header->Capacity < new_capacity)
+		return gen_array_set_capacity(self, new_capacity);
+	return true;
+}
+
+inline bool gen_Array_gen_StrCached_resize(gen_Array_gen_StrCached* self, gen_usize num)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	GEN_ASSERT(*self != gen_nullptr);
+	GEN_ASSERT(num > 0);
+	gen_ArrayHeader* header = gen_array_get_header(*self);
+	if (header->Capacity < num)
+	{
+		if (! gen_array_grow(self, num))
+			return false;
+		header = gen_array_get_header(*self);
+	}
+	header->Num = num;
+	return true;
+}
+
+inline bool gen_Array_gen_StrCached_set_capacity(gen_Array_gen_StrCached* self, gen_usize new_capacity)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	GEN_ASSERT(*self != gen_nullptr);
+	GEN_ASSERT(new_capacity > 0);
+	gen_ArrayHeader* header = gen_array_get_header(*self);
+	if (new_capacity == header->Capacity)
+		return true;
+	if (new_capacity < header->Num)
+	{
+		header->Num = new_capacity;
+		return true;
+	}
+	gen_usize        size       = sizeof(gen_ArrayHeader) + sizeof(gen_StrCached) * new_capacity;
+	gen_ArrayHeader* new_header = gen_cast(gen_ArrayHeader*, gen_alloc(header->Allocator, size));
+	if (new_header == 0)
+		return false;
+	gen_mem_move(new_header, header, sizeof(gen_ArrayHeader) + sizeof(gen_StrCached) * header->Num);
+	new_header->Capacity = new_capacity;
+	gen_allocator_free(header->Allocator, &header);
+	*self = gen_cast(gen_StrCached*, new_header + 1);
+	return true;
+}
+
+#pragma endregion gen_Array_gen_StrCached
+
+#pragma region MacroTable
+
+#define GEN_GENERIC_SLOT_2__hashtable_init         gen_Macro, MacroTable_init
+#define GEN_GENERIC_SLOT_2__hashtable_init_reserve gen_Macro, MacroTable_init_reserve
+#define GEN_GENERIC_SLOT_2__hashtable_clear        MacroTable, MacroTable_clear
+#define GEN_GENERIC_SLOT_2__hashtable_destroy      MacroTable, MacroTable_destroy
+#define GEN_GENERIC_SLOT_2__hashtable_get          MacroTable, MacroTable_get
+#define GEN_GENERIC_SLOT_2__hashtable_map          MacroTable, MacroTable_map
+#define GEN_GENERIC_SLOT_2__hashtable_map_mut      MacroTable, MacroTable_map_mut
+#define GEN_GENERIC_SLOT_2__hashtable_grow         MacroTable*, MacroTable_grow
+#define GEN_GENERIC_SLOT_2__hashtable_rehash       MacroTable*, MacroTable_rehash
+#define GEN_GENERIC_SLOT_2__hashtable_rehash_fast  MacroTable, MacroTable_rehash_fast
+#define GEN_GENERIC_SLOT_2__hashtable_remove_entry MacroTable, MacroTable_remove_entry
+#define GEN_GENERIC_SLOT_2__hashtable_set          MacroTable, MacroTable_set
+#define GEN_GENERIC_SLOT_2__hashtable_slot         MacroTable, MacroTable_slot
+
+#define GEN_GENERIC_SLOT_2__hashtable__add_entry   MacroTable*, MacroTable__add_entry
+#define GEN_GENERIC_SLOT_2__hashtable__find        MacroTable, MacroTable__find
+#define GEN_GENERIC_SLOT_2__hashtable__full        MacroTable, MacroTable__full
+
+typedef struct gen_HashTable_gen_Macro MacroTable;
+typedef struct gen_HTE_MacroTable      gen_HTE_MacroTable;
+
+struct gen_HTE_MacroTable
+{
+	gen_u64   Key;
+	gen_ssize Next;
+	gen_Macro Value;
+};
+
+typedef void (*MacroTable_MapProc)(MacroTable self, gen_u64 key, gen_Macro value);
+typedef void (*MacroTable_MapMutProc)(MacroTable self, gen_u64 key, gen_Macro* value);
+
+#pragma region gen_Arr_HTE_MacroTable
+
+#define GEN_GENERIC_SLOT_9__array_init            gen_HTE_MacroTable, gen_Arr_HTE_MacroTable_init
+#define GEN_GENERIC_SLOT_9__array_init_reserve    gen_HTE_MacroTable, gen_Arr_HTE_MacroTable_init_reserve
+#define GEN_GENERIC_SLOT_9__array_append          gen_Arr_HTE_MacroTable, gen_Arr_HTE_MacroTable_append
+#define GEN_GENERIC_SLOT_9__array_append_items    gen_Arr_HTE_MacroTable, gen_Arr_HTE_MacroTable_append_items
+#define GEN_GENERIC_SLOT_9__array_append_at       gen_Arr_HTE_MacroTable, gen_Arr_HTE_MacroTable_append_at
+#define GEN_GENERIC_SLOT_9__array_append_items_at gen_Arr_HTE_MacroTable, gen_Arr_HTE_MacroTable_append_items_at
+#define GEN_GENERIC_SLOT_9__array_back            gen_Arr_HTE_MacroTable, gen_Arr_HTE_MacroTable_back
+#define GEN_GENERIC_SLOT_9__array_clear           gen_Arr_HTE_MacroTable, gen_Arr_HTE_MacroTable_clear
+#define GEN_GENERIC_SLOT_9__array_fill            gen_Arr_HTE_MacroTable, gen_Arr_HTE_MacroTable_fill
+#define GEN_GENERIC_SLOT_9__array_free            gen_Arr_HTE_MacroTable, gen_Arr_HTE_MacroTable_free
+#define GEN_GENERIC_SLOT_9__array_grow            gen_Arr_HTE_MacroTable*, gen_Arr_HTE_MacroTable_grow
+#define GEN_GENERIC_SLOT_9__array_num             gen_Arr_HTE_MacroTable, gen_Arr_HTE_MacroTable_num
+#define GEN_GENERIC_SLOT_9__array_pop             gen_Arr_HTE_MacroTable, gen_Arr_HTE_MacroTable_pop
+#define GEN_GENERIC_SLOT_9__array_remove_at       gen_Arr_HTE_MacroTable, gen_Arr_HTE_MacroTable_remove_at
+#define GEN_GENERIC_SLOT_9__array_reserve         gen_Arr_HTE_MacroTable, gen_Arr_HTE_MacroTable_reserve
+#define GEN_GENERIC_SLOT_9__array_resize          gen_Arr_HTE_MacroTable, gen_Arr_HTE_MacroTable_resize
+#define GEN_GENERIC_SLOT_9__array_set_capacity    gen_Arr_HTE_MacroTable*, gen_Arr_HTE_MacroTable_set_capacity
+
+typedef gen_HTE_MacroTable* gen_Arr_HTE_MacroTable;
+gen_Arr_HTE_MacroTable      gen_Arr_HTE_MacroTable_init(gen_AllocatorInfo allocator);
+gen_Arr_HTE_MacroTable      gen_Arr_HTE_MacroTable_init_reserve(gen_AllocatorInfo allocator, gen_usize capacity);
+bool                        gen_Arr_HTE_MacroTable_append_array(gen_Arr_HTE_MacroTable* self, gen_Arr_HTE_MacroTable other);
+bool                        gen_Arr_HTE_MacroTable_append(gen_Arr_HTE_MacroTable* self, gen_HTE_MacroTable value);
+bool                        gen_Arr_HTE_MacroTable_append_items(gen_Arr_HTE_MacroTable* self, gen_HTE_MacroTable* items, gen_usize item_num);
+bool                        gen_Arr_HTE_MacroTable_append_at(gen_Arr_HTE_MacroTable* self, gen_HTE_MacroTable item, gen_usize idx);
+bool                        gen_Arr_HTE_MacroTable_append_items_at(gen_Arr_HTE_MacroTable* self, gen_HTE_MacroTable* items, gen_usize item_num, gen_usize idx);
+gen_HTE_MacroTable*         gen_Arr_HTE_MacroTable_back(gen_Arr_HTE_MacroTable self);
+void                        gen_Arr_HTE_MacroTable_clear(gen_Arr_HTE_MacroTable self);
+bool                        gen_Arr_HTE_MacroTable_fill(gen_Arr_HTE_MacroTable self, gen_usize begin, gen_usize end, gen_HTE_MacroTable value);
+void                        gen_Arr_HTE_MacroTable_free(gen_Arr_HTE_MacroTable* self);
+bool                        gen_Arr_HTE_MacroTable_grow(gen_Arr_HTE_MacroTable* self, gen_usize min_capacity);
+gen_usize                   gen_Arr_HTE_MacroTable_num(gen_Arr_HTE_MacroTable self);
+gen_HTE_MacroTable          gen_Arr_HTE_MacroTable_pop(gen_Arr_HTE_MacroTable self);
+void                        gen_Arr_HTE_MacroTable_remove_at(gen_Arr_HTE_MacroTable self, gen_usize idx);
+bool                        gen_Arr_HTE_MacroTable_reserve(gen_Arr_HTE_MacroTable* self, gen_usize new_capacity);
+bool                        gen_Arr_HTE_MacroTable_resize(gen_Arr_HTE_MacroTable* self, gen_usize num);
+bool                        gen_Arr_HTE_MacroTable_set_capacity(gen_Arr_HTE_MacroTable* self, gen_usize new_capacity);
+
+gen_forceinline gen_Arr_HTE_MacroTable gen_Arr_HTE_MacroTable_init(gen_AllocatorInfo allocator)
+{
+	size_t initial_size = gen_array_grow_formula(0);
+	return gen_array_init_reserve(gen_HTE_MacroTable, allocator, initial_size);
+}
+
+inline gen_Arr_HTE_MacroTable gen_Arr_HTE_MacroTable_init_reserve(gen_AllocatorInfo allocator, gen_usize capacity)
+{
+	GEN_ASSERT(capacity > 0);
+	gen_ArrayHeader* header = gen_rcast(gen_ArrayHeader*, gen_alloc(allocator, sizeof(gen_ArrayHeader) + sizeof(gen_HTE_MacroTable) * capacity));
+	if (header == gen_nullptr)
+		return gen_nullptr;
+	header->Allocator = allocator;
+	header->Capacity  = capacity;
+	header->Num       = 0;
+	return gen_rcast(gen_HTE_MacroTable*, header + 1);
+}
+
+gen_forceinline bool gen_Arr_HTE_MacroTable_append_array(gen_Arr_HTE_MacroTable* self, gen_Arr_HTE_MacroTable other)
+{
+	return gen_array_append_items(*self, (gen_Arr_HTE_MacroTable)other, gen_Arr_HTE_MacroTable_num(other));
+}
+
+inline bool gen_Arr_HTE_MacroTable_append(gen_Arr_HTE_MacroTable* self, gen_HTE_MacroTable value)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	GEN_ASSERT(*self != gen_nullptr);
+	gen_ArrayHeader* header = gen_array_get_header(*self);
+	if (header->Num == header->Capacity)
+	{
+		if (! gen_array_grow(self, header->Capacity))
+			return false;
+		header = gen_array_get_header(*self);
+	}
+	(*self)[header->Num] = value;
+	header->Num++;
+	return true;
+}
+
+inline bool gen_Arr_HTE_MacroTable_append_items(gen_Arr_HTE_MacroTable* self, gen_HTE_MacroTable* items, gen_usize item_num)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	GEN_ASSERT(*self != gen_nullptr);
+	GEN_ASSERT(items != gen_nullptr);
+	GEN_ASSERT(item_num > 0);
+	gen_ArrayHeader* header = gen_array_get_header(*self);
+	if (header->Num + item_num > header->Capacity)
+	{
+		if (! gen_array_grow(self, header->Capacity + item_num))
+			return false;
+		header = gen_array_get_header(*self);
+	}
+	gen_mem_copy((*self) + header->Num, items, sizeof(gen_HTE_MacroTable) * item_num);
+	header->Num += item_num;
+	return true;
+}
+
+inline bool gen_Arr_HTE_MacroTable_append_at(gen_Arr_HTE_MacroTable* self, gen_HTE_MacroTable item, gen_usize idx)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	GEN_ASSERT(*self != gen_nullptr);
+	gen_ArrayHeader* header = gen_array_get_header(*self);
+	if (idx >= header->Num)
+		idx = header->Num - 1;
+	if (idx < 0)
+		idx = 0;
+	if (header->Capacity < header->Num + 1)
+	{
+		if (! gen_array_grow(self, header->Capacity + 1))
+			return false;
+		header = gen_array_get_header(*self);
+	}
+	gen_Arr_HTE_MacroTable target = (*self) + idx;
+	gen_mem_move(target + 1, target, (header->Num - idx) * sizeof(gen_HTE_MacroTable));
+	header->Num++;
+	return true;
+}
+
+inline bool gen_Arr_HTE_MacroTable_append_items_at(gen_Arr_HTE_MacroTable* self, gen_HTE_MacroTable* items, gen_usize item_num, gen_usize idx)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	GEN_ASSERT(*self != gen_nullptr);
+	gen_ArrayHeader* header = gen_array_get_header(*self);
+	if (idx >= header->Num)
+	{
+		return gen_array_append_items(*self, items, item_num);
+	}
+	if (item_num > header->Capacity)
+	{
+		if (! gen_array_grow(self, item_num + header->Capacity))
+			return false;
+		header = gen_array_get_header(*self);
+	}
+	gen_HTE_MacroTable* target = (*self) + idx + item_num;
+	gen_HTE_MacroTable* src    = (*self) + idx;
+	gen_mem_move(target, src, (header->Num - idx) * sizeof(gen_HTE_MacroTable));
+	gen_mem_copy(src, items, item_num * sizeof(gen_HTE_MacroTable));
+	header->Num += item_num;
+	return true;
+}
+
+inline gen_HTE_MacroTable* gen_Arr_HTE_MacroTable_back(gen_Arr_HTE_MacroTable self)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	gen_ArrayHeader* header = gen_array_get_header(self);
+	if (header->Num == 0)
+		return 0;
+	return self + header->Num - 1;
+}
+
+inline void gen_Arr_HTE_MacroTable_clear(gen_Arr_HTE_MacroTable self)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	gen_ArrayHeader* header = gen_array_get_header(self);
+	header->Num             = 0;
+}
+
+inline bool gen_Arr_HTE_MacroTable_fill(gen_Arr_HTE_MacroTable self, gen_usize begin, gen_usize end, gen_HTE_MacroTable value)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	GEN_ASSERT(begin <= end);
+	gen_ArrayHeader* header = gen_array_get_header(self);
+	if (begin < 0 || end > header->Num)
+		return false;
+	for (gen_ssize idx = (gen_ssize)begin; idx < (gen_ssize)end; idx++)
+		self[idx] = value;
+	return true;
+}
+
+inline void gen_Arr_HTE_MacroTable_free(gen_Arr_HTE_MacroTable* self)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	GEN_ASSERT(*self != gen_nullptr);
+	gen_ArrayHeader* header = gen_array_get_header(*self);
+	gen_allocator_free(header->Allocator, header);
+	self = 0;
+}
+
+inline bool gen_Arr_HTE_MacroTable_grow(gen_Arr_HTE_MacroTable* self, gen_usize min_capacity)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	GEN_ASSERT(*self != gen_nullptr);
+	GEN_ASSERT(min_capacity > 0);
+	gen_ArrayHeader* header       = gen_array_get_header(*self);
+	gen_usize        new_capacity = gen_array_grow_formula(header->Capacity);
+	if (new_capacity < min_capacity)
+		new_capacity = min_capacity;
+	return gen_array_set_capacity(self, new_capacity);
+}
+
+gen_forceinline gen_usize gen_Arr_HTE_MacroTable_num(gen_Arr_HTE_MacroTable self)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	return gen_array_get_header(self)->Num;
+}
+
+inline gen_HTE_MacroTable gen_Arr_HTE_MacroTable_pop(gen_Arr_HTE_MacroTable self)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	gen_ArrayHeader* header = gen_array_get_header(self);
+	GEN_ASSERT(header->Num > 0);
+	gen_HTE_MacroTable result = self[header->Num - 1];
+	header->Num--;
+	return result;
+}
+
+gen_forceinline void gen_Arr_HTE_MacroTable_remove_at(gen_Arr_HTE_MacroTable self, gen_usize idx)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	gen_ArrayHeader* header = gen_array_get_header(self);
+	GEN_ASSERT(idx < header->Num);
+	gen_mem_move(self + idx, self + idx + 1, sizeof(gen_HTE_MacroTable) * (header->Num - idx - 1));
+	header->Num--;
+}
+
+inline bool gen_Arr_HTE_MacroTable_reserve(gen_Arr_HTE_MacroTable* self, gen_usize new_capacity)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	GEN_ASSERT(*self != gen_nullptr);
+	GEN_ASSERT(new_capacity > 0);
+	gen_ArrayHeader* header = gen_array_get_header(*self);
+	if (header->Capacity < new_capacity)
+		return gen_array_set_capacity(self, new_capacity);
+	return true;
+}
+
+inline bool gen_Arr_HTE_MacroTable_resize(gen_Arr_HTE_MacroTable* self, gen_usize num)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	GEN_ASSERT(*self != gen_nullptr);
+	GEN_ASSERT(num > 0);
+	gen_ArrayHeader* header = gen_array_get_header(*self);
+	if (header->Capacity < num)
+	{
+		if (! gen_array_grow(self, num))
+			return false;
+		header = gen_array_get_header(*self);
+	}
+	header->Num = num;
+	return true;
+}
+
+inline bool gen_Arr_HTE_MacroTable_set_capacity(gen_Arr_HTE_MacroTable* self, gen_usize new_capacity)
+{
+	GEN_ASSERT(self != gen_nullptr);
+	GEN_ASSERT(*self != gen_nullptr);
+	GEN_ASSERT(new_capacity > 0);
+	gen_ArrayHeader* header = gen_array_get_header(*self);
+	if (new_capacity == header->Capacity)
+		return true;
+	if (new_capacity < header->Num)
+	{
+		header->Num = new_capacity;
+		return true;
+	}
+	gen_usize        size       = sizeof(gen_ArrayHeader) + sizeof(gen_HTE_MacroTable) * new_capacity;
+	gen_ArrayHeader* new_header = gen_cast(gen_ArrayHeader*, gen_alloc(header->Allocator, size));
+	if (new_header == 0)
+		return false;
+	gen_mem_move(new_header, header, sizeof(gen_ArrayHeader) + sizeof(gen_HTE_MacroTable) * header->Num);
+	new_header->Capacity = new_capacity;
+	gen_allocator_free(header->Allocator, &header);
+	*self = gen_cast(gen_HTE_MacroTable*, new_header + 1);
+	return true;
+}
+
+#pragma endregion gen_Arr_HTE_MacroTable
+
+struct gen_HashTable_gen_Macro
+{
+	gen_Array_gen_ssize    Hashes;
+	gen_Arr_HTE_MacroTable Entries;
+};
+
+MacroTable        MacroTable_init(gen_AllocatorInfo allocator);
+MacroTable        MacroTable_init_reserve(gen_AllocatorInfo allocator, gen_ssize num);
+void              MacroTable_clear(MacroTable self);
+void              MacroTable_destroy(MacroTable* self);
+gen_Macro*        MacroTable_get(MacroTable self, gen_u64 key);
+void              MacroTable_map(MacroTable self, MacroTable_MapProc map_proc);
+void              MacroTable_map_mut(MacroTable self, MacroTable_MapMutProc map_proc);
+void              MacroTable_grow(MacroTable* self);
+void              MacroTable_rehash(MacroTable* self, gen_ssize new_num);
+void              MacroTable_rehash_fast(MacroTable self);
+void              MacroTable_remove(MacroTable self, gen_u64 key);
+void              MacroTable_remove_entry(MacroTable self, gen_ssize idx);
+void              MacroTable_set(MacroTable* self, gen_u64 key, gen_Macro value);
+gen_ssize         MacroTable_slot(MacroTable self, gen_u64 key);
+gen_ssize         MacroTable__add_entry(MacroTable* self, gen_u64 key);
+gen_HT_FindResult MacroTable__find(MacroTable self, gen_u64 key);
+gen_b32           MacroTable__full(MacroTable self);
+
+MacroTable MacroTable_init(gen_AllocatorInfo allocator)
+{
+	MacroTable result = gen_hashtable_init_reserve(gen_Macro, allocator, 8);
+	return result;
+}
+
+MacroTable MacroTable_init_reserve(gen_AllocatorInfo allocator, gen_ssize num)
+{
+	MacroTable result                        = { 0, 0 };
+	result.Hashes                            = gen_array_init_reserve(gen_ssize, allocator, num);
+	gen_array_get_header(result.Hashes)->Num = num;
+	gen_array_resize(result.Hashes, num);
+	gen_array_fill(result.Hashes, 0, num, -1);
+	result.Entries = gen_array_init_reserve(gen_HTE_MacroTable, allocator, num);
+	return result;
+}
+
+void MacroTable_clear(MacroTable self)
+{
+	GEN_ASSERT_NOT_NULL(self.Hashes);
+	GEN_ASSERT_NOT_NULL(self.Entries);
+	gen_array_clear(self.Entries);
+	gen_s32 what = gen_array_num(self.Hashes);
+	gen_array_fill(self.Hashes, 0, what, (gen_ssize)-1);
+}
+
+void MacroTable_destroy(MacroTable* self)
+{
+	GEN_ASSERT_NOT_NULL(self);
+	GEN_ASSERT_NOT_NULL(self->Hashes);
+	GEN_ASSERT_NOT_NULL(self->Entries);
+	if (self->Hashes && gen_array_get_header(self->Hashes)->Capacity)
+	{
+		gen_array_free(self->Hashes);
+		gen_array_free(self->Entries);
+	}
+}
+
+gen_Macro* MacroTable_get(MacroTable self, gen_u64 key)
+{
+	GEN_ASSERT_NOT_NULL(self.Hashes);
+	GEN_ASSERT_NOT_NULL(self.Entries);
+	gen_ssize idx = MacroTable__find(self, key).EntryIndex;
+	if (idx > 0)
+		return &self.Entries[idx].Value;
+	return gen_nullptr;
+}
+
+void MacroTable_map(MacroTable self, MacroTable_MapProc map_proc)
+{
+	GEN_ASSERT_NOT_NULL(self.Hashes);
+	GEN_ASSERT_NOT_NULL(self.Entries);
+	GEN_ASSERT_NOT_NULL(map_proc);
+	for (gen_ssize idx = 0; idx < gen_array_get_header(self.Entries)->Num; idx++)
+	{
+		map_proc(self, self.Entries[idx].Key, self.Entries[idx].Value);
+	}
+}
+
+void MacroTable_map_mut(MacroTable self, MacroTable_MapMutProc map_proc)
+{
+	GEN_ASSERT_NOT_NULL(self.Hashes);
+	GEN_ASSERT_NOT_NULL(self.Entries);
+	GEN_ASSERT_NOT_NULL(map_proc);
+	for (gen_ssize idx = 0; idx < gen_array_get_header(self.Entries)->Num; idx++)
+	{
+		map_proc(self, self.Entries[idx].Key, &self.Entries[idx].Value);
+	}
+}
+
+void MacroTable_grow(MacroTable* self)
+{
+	GEN_ASSERT_NOT_NULL(self);
+	GEN_ASSERT_NOT_NULL(self->Hashes);
+	GEN_ASSERT_NOT_NULL(self->Entries);
+	gen_ssize new_num = gen_array_grow_formula(gen_array_get_header(self->Entries)->Num);
+	gen_hashtable_rehash(self, new_num);
+}
+
+void MacroTable_rehash(MacroTable* self, gen_ssize new_num)
+{
+	GEN_ASSERT_NOT_NULL(self);
+	GEN_ASSERT_NOT_NULL(self->Hashes);
+	GEN_ASSERT_NOT_NULL(self->Entries);
+	GEN_ASSERT(new_num > 0);
+	gen_ssize        idx;
+	gen_ssize        last_added_index;
+	gen_ArrayHeader* old_hash_header    = gen_array_get_header(self->Hashes);
+	gen_ArrayHeader* old_entries_header = gen_array_get_header(self->Entries);
+	MacroTable       new_tbl            = gen_hashtable_init_reserve(gen_Macro, old_hash_header->Allocator, old_hash_header->Num);
+	gen_ArrayHeader* new_hash_header    = gen_array_get_header(new_tbl.Hashes);
+	for (gen_ssize idx = 0; idx < gen_cast(gen_ssize, old_hash_header->Num); ++idx)
+	{
+		gen_HTE_MacroTable* entry = &self->Entries[idx];
+		gen_HT_FindResult   find_result;
+		find_result      = MacroTable__find(new_tbl, entry->Key);
+		last_added_index = MacroTable__add_entry(&new_tbl, entry->Key);
+		if (find_result.PrevIndex < 0)
+			new_tbl.Hashes[find_result.HashIndex] = last_added_index;
+		else
+			new_tbl.Entries[find_result.PrevIndex].Next = last_added_index;
+		new_tbl.Entries[last_added_index].Next  = find_result.EntryIndex;
+		new_tbl.Entries[last_added_index].Value = entry->Value;
+	}
+	MacroTable_destroy(self);
+	*self = new_tbl;
+}
+
+void MacroTable_rehash_fast(MacroTable self)
+{
+	GEN_ASSERT_NOT_NULL(self.Hashes);
+	GEN_ASSERT_NOT_NULL(self.Entries);
+	gen_ssize idx;
+	for (idx = 0; idx < gen_array_get_header(self.Entries)->Num; idx++)
+		self.Entries[idx].Next = -1;
+	for (idx = 0; idx < gen_array_get_header(self.Hashes)->Num; idx++)
+		self.Hashes[idx] = -1;
+	for (idx = 0; idx < gen_array_get_header(self.Entries)->Num; idx++)
+	{
+		gen_HTE_MacroTable* entry;
+		gen_HT_FindResult   find_result;
+		entry       = &self.Entries[idx];
+		find_result = MacroTable__find(self, entry->Key);
+		if (find_result.PrevIndex < 0)
+			self.Hashes[find_result.HashIndex] = idx;
+		else
+			self.Entries[find_result.PrevIndex].Next = idx;
+	}
+}
+
+void MacroTable_remove(MacroTable self, gen_u64 key)
+{
+	GEN_ASSERT_NOT_NULL(self.Hashes);
+	GEN_ASSERT_NOT_NULL(self.Entries);
+	gen_HT_FindResult find_result = MacroTable__find(self, key);
+	if (find_result.EntryIndex >= 0)
+	{
+		gen_array_remove_at(self.Entries, find_result.EntryIndex);
+		gen_hashtable_rehash_fast(self);
+	}
+}
+
+void MacroTable_remove_entry(MacroTable self, gen_ssize idx)
+{
+	GEN_ASSERT_NOT_NULL(self.Hashes);
+	GEN_ASSERT_NOT_NULL(self.Entries);
+	gen_array_remove_at(self.Entries, idx);
+}
+
+void MacroTable_set(MacroTable* self, gen_u64 key, gen_Macro value)
+{
+	GEN_ASSERT_NOT_NULL(self);
+	GEN_ASSERT_NOT_NULL(self->Hashes);
+	GEN_ASSERT_NOT_NULL(self->Entries);
+	gen_ssize         idx;
+	gen_HT_FindResult find_result;
+	if (gen_array_get_header(self->Hashes)->Num == 0)
+		gen_hashtable_grow(self);
+	find_result = MacroTable__find(*self, key);
+	if (find_result.EntryIndex >= 0)
+	{
+		idx = find_result.EntryIndex;
+	}
+	else
+	{
+		idx = MacroTable__add_entry(self, key);
+		if (find_result.PrevIndex >= 0)
+		{
+			self->Entries[find_result.PrevIndex].Next = idx;
+		}
+		else
+		{
+			self->Hashes[find_result.HashIndex] = idx;
+		}
+	}
+	self->Entries[idx].Value = value;
+	if (MacroTable__full(*self))
+		gen_hashtable_grow(self);
+}
+
+gen_ssize MacroTable_slot(MacroTable self, gen_u64 key)
+{
+	GEN_ASSERT_NOT_NULL(self.Hashes);
+	GEN_ASSERT_NOT_NULL(self.Entries);
+	for (gen_ssize idx = 0; idx < gen_array_get_header(self.Hashes)->Num; ++idx)
+		if (self.Hashes[idx] == key)
+			return idx;
+	return -1;
+}
+
+gen_ssize MacroTable__add_entry(MacroTable* self, gen_u64 key)
+{
+	GEN_ASSERT_NOT_NULL(self);
+	GEN_ASSERT_NOT_NULL(self->Hashes);
+	GEN_ASSERT_NOT_NULL(self->Entries);
+	gen_ssize          idx;
+	gen_HTE_MacroTable entry = { key, -1 };
+	idx                      = gen_array_get_header(self->Entries)->Num;
+	gen_array_append(self->Entries, entry);
+	return idx;
+}
+
+gen_HT_FindResult MacroTable__find(MacroTable self, gen_u64 key)
+{
+	GEN_ASSERT_NOT_NULL(self.Hashes);
+	GEN_ASSERT_NOT_NULL(self.Entries);
+	gen_HT_FindResult result      = { -1, -1, -1 };
+	gen_ArrayHeader*  hash_header = gen_array_get_header(self.Hashes);
+	if (hash_header->Num > 0)
+	{
+		result.HashIndex  = key % hash_header->Num;
+		result.EntryIndex = self.Hashes[result.HashIndex];
+		while (result.EntryIndex >= 0)
+		{
+			if (self.Entries[result.EntryIndex].Key == key)
+				break;
+			result.PrevIndex  = result.EntryIndex;
+			result.EntryIndex = self.Entries[result.EntryIndex].Next;
+		}
+	}
+	return result;
+}
+
+gen_b32 MacroTable__full(MacroTable self)
+{
+	GEN_ASSERT_NOT_NULL(self.Hashes);
+	GEN_ASSERT_NOT_NULL(self.Entries);
+	gen_ArrayHeader* hash_header    = gen_array_get_header(self.Hashes);
+	gen_ArrayHeader* entries_header = gen_array_get_header(self.Entries);
+	gen_usize        critical_load  = gen_cast(gen_usize, gen_HashTable_CriticalLoadScale * gen_cast(gen_f32, hash_header->Num));
+	gen_b32          result         = entries_header->Num > critical_load;
+	return result;
+}
+
+#pragma endregion MacroTable
+
 #pragma region Gen Interface
 
 /*
@@ -4109,7 +5474,7 @@ inline void gen_class_add_interface(gen_CodeClass self, gen_CodeTypename type)
 		possible_slot = gen_cast(gen_CodeTypename, possible_slot->Next);
 	}
 
-	possible_slot->Next = type;
+	possible_slot->Next = gen_cast(gen_Code, type);
 }
 
 #pragma endregion gen_CodeClass
@@ -4341,10 +5706,10 @@ inline void gen_struct_add_interface(gen_CodeStruct self, gen_CodeTypename type)
 
 	while (possible_slot->Next != gen_nullptr)
 	{
-		possible_slot->Next = gen_cast(gen_CodeTypename, possible_slot->Next);
+		possible_slot = gen_cast(gen_CodeTypename, possible_slot->Next);
 	}
 
-	possible_slot->Next = type;
+	possible_slot->Next = gen_cast(gen_Code, type);
 }
 
 #pragma endregion gen_Code
@@ -4394,273 +5759,6 @@ inline gen_Str gen_token_fmt_impl(gen_ssize num, ...)
 #pragma endregion Interface
 #pragma endregion Inlines
 
-#pragma region gen_Array_gen_StrCached
-
-#define GEN_GENERIC_SLOT_2__array_init            gen_StrCached, gen_Array_gen_StrCached_init
-#define GEN_GENERIC_SLOT_2__array_init_reserve    gen_StrCached, gen_Array_gen_StrCached_init_reserve
-#define GEN_GENERIC_SLOT_2__array_append          gen_Array_gen_StrCached, gen_Array_gen_StrCached_append
-#define GEN_GENERIC_SLOT_2__array_append_items    gen_Array_gen_StrCached, gen_Array_gen_StrCached_append_items
-#define GEN_GENERIC_SLOT_2__array_append_at       gen_Array_gen_StrCached, gen_Array_gen_StrCached_append_at
-#define GEN_GENERIC_SLOT_2__array_append_items_at gen_Array_gen_StrCached, gen_Array_gen_StrCached_append_items_at
-#define GEN_GENERIC_SLOT_2__array_back            gen_Array_gen_StrCached, gen_Array_gen_StrCached_back
-#define GEN_GENERIC_SLOT_2__array_clear           gen_Array_gen_StrCached, gen_Array_gen_StrCached_clear
-#define GEN_GENERIC_SLOT_2__array_fill            gen_Array_gen_StrCached, gen_Array_gen_StrCached_fill
-#define GEN_GENERIC_SLOT_2__array_free            gen_Array_gen_StrCached, gen_Array_gen_StrCached_free
-#define GEN_GENERIC_SLOT_2__array_grow            gen_Array_gen_StrCached*, gen_Array_gen_StrCached_grow
-#define GEN_GENERIC_SLOT_2__array_num             gen_Array_gen_StrCached, gen_Array_gen_StrCached_num
-#define GEN_GENERIC_SLOT_2__array_pop             gen_Array_gen_StrCached, gen_Array_gen_StrCached_pop
-#define GEN_GENERIC_SLOT_2__array_remove_at       gen_Array_gen_StrCached, gen_Array_gen_StrCached_remove_at
-#define GEN_GENERIC_SLOT_2__array_reserve         gen_Array_gen_StrCached, gen_Array_gen_StrCached_reserve
-#define GEN_GENERIC_SLOT_2__array_resize          gen_Array_gen_StrCached, gen_Array_gen_StrCached_resize
-#define GEN_GENERIC_SLOT_2__array_set_capacity    gen_Array_gen_StrCached*, gen_Array_gen_StrCached_set_capacity
-
-typedef gen_StrCached*  gen_Array_gen_StrCached;
-gen_Array_gen_StrCached gen_Array_gen_StrCached_init(gen_AllocatorInfo allocator);
-gen_Array_gen_StrCached gen_Array_gen_StrCached_init_reserve(gen_AllocatorInfo allocator, gen_usize capacity);
-bool                    gen_Array_gen_StrCached_append_array(gen_Array_gen_StrCached* self, gen_Array_gen_StrCached other);
-bool                    gen_Array_gen_StrCached_append(gen_Array_gen_StrCached* self, gen_StrCached value);
-bool                    gen_Array_gen_StrCached_append_items(gen_Array_gen_StrCached* self, gen_StrCached* items, gen_usize item_num);
-bool                    gen_Array_gen_StrCached_append_at(gen_Array_gen_StrCached* self, gen_StrCached item, gen_usize idx);
-bool                    gen_Array_gen_StrCached_append_items_at(gen_Array_gen_StrCached* self, gen_StrCached* items, gen_usize item_num, gen_usize idx);
-gen_StrCached*          gen_Array_gen_StrCached_back(gen_Array_gen_StrCached self);
-void                    gen_Array_gen_StrCached_clear(gen_Array_gen_StrCached self);
-bool                    gen_Array_gen_StrCached_fill(gen_Array_gen_StrCached self, gen_usize begin, gen_usize end, gen_StrCached value);
-void                    gen_Array_gen_StrCached_free(gen_Array_gen_StrCached* self);
-bool                    gen_Array_gen_StrCached_grow(gen_Array_gen_StrCached* self, gen_usize min_capacity);
-gen_usize               gen_Array_gen_StrCached_num(gen_Array_gen_StrCached self);
-gen_StrCached           gen_Array_gen_StrCached_pop(gen_Array_gen_StrCached self);
-void                    gen_Array_gen_StrCached_remove_at(gen_Array_gen_StrCached self, gen_usize idx);
-bool                    gen_Array_gen_StrCached_reserve(gen_Array_gen_StrCached* self, gen_usize new_capacity);
-bool                    gen_Array_gen_StrCached_resize(gen_Array_gen_StrCached* self, gen_usize num);
-bool                    gen_Array_gen_StrCached_set_capacity(gen_Array_gen_StrCached* self, gen_usize new_capacity);
-
-gen_forceinline gen_Array_gen_StrCached gen_Array_gen_StrCached_init(gen_AllocatorInfo allocator)
-{
-	size_t initial_size = gen_array_grow_formula(0);
-	return gen_array_init_reserve(gen_StrCached, allocator, initial_size);
-}
-
-inline gen_Array_gen_StrCached gen_Array_gen_StrCached_init_reserve(gen_AllocatorInfo allocator, gen_usize capacity)
-{
-	GEN_ASSERT(capacity > 0);
-	gen_ArrayHeader* header = gen_rcast(gen_ArrayHeader*, gen_alloc(allocator, sizeof(gen_ArrayHeader) + sizeof(gen_StrCached) * capacity));
-	if (header == gen_nullptr)
-		return gen_nullptr;
-	header->Allocator = allocator;
-	header->Capacity  = capacity;
-	header->Num       = 0;
-	return gen_rcast(gen_StrCached*, header + 1);
-}
-
-gen_forceinline bool gen_Array_gen_StrCached_append_array(gen_Array_gen_StrCached* self, gen_Array_gen_StrCached other)
-{
-	return gen_array_append_items(*self, (gen_Array_gen_StrCached)other, gen_Array_gen_StrCached_num(other));
-}
-
-inline bool gen_Array_gen_StrCached_append(gen_Array_gen_StrCached* self, gen_StrCached value)
-{
-	GEN_ASSERT(self != gen_nullptr);
-	GEN_ASSERT(*self != gen_nullptr);
-	gen_ArrayHeader* header = gen_array_get_header(*self);
-	if (header->Num == header->Capacity)
-	{
-		if (! gen_array_grow(self, header->Capacity))
-			return false;
-		header = gen_array_get_header(*self);
-	}
-	(*self)[header->Num] = value;
-	header->Num++;
-	return true;
-}
-
-inline bool gen_Array_gen_StrCached_append_items(gen_Array_gen_StrCached* self, gen_StrCached* items, gen_usize item_num)
-{
-	GEN_ASSERT(self != gen_nullptr);
-	GEN_ASSERT(*self != gen_nullptr);
-	GEN_ASSERT(items != gen_nullptr);
-	GEN_ASSERT(item_num > 0);
-	gen_ArrayHeader* header = gen_array_get_header(*self);
-	if (header->Num + item_num > header->Capacity)
-	{
-		if (! gen_array_grow(self, header->Capacity + item_num))
-			return false;
-		header = gen_array_get_header(*self);
-	}
-	gen_mem_copy((*self) + header->Num, items, sizeof(gen_StrCached) * item_num);
-	header->Num += item_num;
-	return true;
-}
-
-inline bool gen_Array_gen_StrCached_append_at(gen_Array_gen_StrCached* self, gen_StrCached item, gen_usize idx)
-{
-	GEN_ASSERT(self != gen_nullptr);
-	GEN_ASSERT(*self != gen_nullptr);
-	gen_ArrayHeader* header = gen_array_get_header(*self);
-	if (idx >= header->Num)
-		idx = header->Num - 1;
-	if (idx < 0)
-		idx = 0;
-	if (header->Capacity < header->Num + 1)
-	{
-		if (! gen_array_grow(self, header->Capacity + 1))
-			return false;
-		header = gen_array_get_header(*self);
-	}
-	gen_Array_gen_StrCached target = (*self) + idx;
-	gen_mem_move(target + 1, target, (header->Num - idx) * sizeof(gen_StrCached));
-	header->Num++;
-	return true;
-}
-
-inline bool gen_Array_gen_StrCached_append_items_at(gen_Array_gen_StrCached* self, gen_StrCached* items, gen_usize item_num, gen_usize idx)
-{
-	GEN_ASSERT(self != gen_nullptr);
-	GEN_ASSERT(*self != gen_nullptr);
-	gen_ArrayHeader* header = gen_array_get_header(*self);
-	if (idx >= header->Num)
-	{
-		return gen_array_append_items(*self, items, item_num);
-	}
-	if (item_num > header->Capacity)
-	{
-		if (! gen_array_grow(self, item_num + header->Capacity))
-			return false;
-		header = gen_array_get_header(*self);
-	}
-	gen_StrCached* target = (*self) + idx + item_num;
-	gen_StrCached* src    = (*self) + idx;
-	gen_mem_move(target, src, (header->Num - idx) * sizeof(gen_StrCached));
-	gen_mem_copy(src, items, item_num * sizeof(gen_StrCached));
-	header->Num += item_num;
-	return true;
-}
-
-inline gen_StrCached* gen_Array_gen_StrCached_back(gen_Array_gen_StrCached self)
-{
-	GEN_ASSERT(self != gen_nullptr);
-	gen_ArrayHeader* header = gen_array_get_header(self);
-	if (header->Num == 0)
-		return 0;
-	return self + header->Num - 1;
-}
-
-inline void gen_Array_gen_StrCached_clear(gen_Array_gen_StrCached self)
-{
-	GEN_ASSERT(self != gen_nullptr);
-	gen_ArrayHeader* header = gen_array_get_header(self);
-	header->Num             = 0;
-}
-
-inline bool gen_Array_gen_StrCached_fill(gen_Array_gen_StrCached self, gen_usize begin, gen_usize end, gen_StrCached value)
-{
-	GEN_ASSERT(self != gen_nullptr);
-	GEN_ASSERT(begin <= end);
-	gen_ArrayHeader* header = gen_array_get_header(self);
-	if (begin < 0 || end > header->Num)
-		return false;
-	for (gen_ssize idx = (gen_ssize)begin; idx < (gen_ssize)end; idx++)
-		self[idx] = value;
-	return true;
-}
-
-inline void gen_Array_gen_StrCached_free(gen_Array_gen_StrCached* self)
-{
-	GEN_ASSERT(self != gen_nullptr);
-	GEN_ASSERT(*self != gen_nullptr);
-	gen_ArrayHeader* header = gen_array_get_header(*self);
-	gen_allocator_free(header->Allocator, header);
-	self = 0;
-}
-
-inline bool gen_Array_gen_StrCached_grow(gen_Array_gen_StrCached* self, gen_usize min_capacity)
-{
-	GEN_ASSERT(self != gen_nullptr);
-	GEN_ASSERT(*self != gen_nullptr);
-	GEN_ASSERT(min_capacity > 0);
-	gen_ArrayHeader* header       = gen_array_get_header(*self);
-	gen_usize        new_capacity = gen_array_grow_formula(header->Capacity);
-	if (new_capacity < min_capacity)
-		new_capacity = min_capacity;
-	return gen_array_set_capacity(self, new_capacity);
-}
-
-gen_forceinline gen_usize gen_Array_gen_StrCached_num(gen_Array_gen_StrCached self)
-{
-	GEN_ASSERT(self != gen_nullptr);
-	return gen_array_get_header(self)->Num;
-}
-
-inline gen_StrCached gen_Array_gen_StrCached_pop(gen_Array_gen_StrCached self)
-{
-	GEN_ASSERT(self != gen_nullptr);
-	gen_ArrayHeader* header = gen_array_get_header(self);
-	GEN_ASSERT(header->Num > 0);
-	gen_StrCached result = self[header->Num - 1];
-	header->Num--;
-	return result;
-}
-
-gen_forceinline void gen_Array_gen_StrCached_remove_at(gen_Array_gen_StrCached self, gen_usize idx)
-{
-	GEN_ASSERT(self != gen_nullptr);
-	gen_ArrayHeader* header = gen_array_get_header(self);
-	GEN_ASSERT(idx < header->Num);
-	gen_mem_move(self + idx, self + idx + 1, sizeof(gen_StrCached) * (header->Num - idx - 1));
-	header->Num--;
-}
-
-inline bool gen_Array_gen_StrCached_reserve(gen_Array_gen_StrCached* self, gen_usize new_capacity)
-{
-	GEN_ASSERT(self != gen_nullptr);
-	GEN_ASSERT(*self != gen_nullptr);
-	GEN_ASSERT(new_capacity > 0);
-	gen_ArrayHeader* header = gen_array_get_header(*self);
-	if (header->Capacity < new_capacity)
-		return gen_array_set_capacity(self, new_capacity);
-	return true;
-}
-
-inline bool gen_Array_gen_StrCached_resize(gen_Array_gen_StrCached* self, gen_usize num)
-{
-	GEN_ASSERT(self != gen_nullptr);
-	GEN_ASSERT(*self != gen_nullptr);
-	GEN_ASSERT(num > 0);
-	gen_ArrayHeader* header = gen_array_get_header(*self);
-	if (header->Capacity < num)
-	{
-		if (! gen_array_grow(self, num))
-			return false;
-		header = gen_array_get_header(*self);
-	}
-	header->Num = num;
-	return true;
-}
-
-inline bool gen_Array_gen_StrCached_set_capacity(gen_Array_gen_StrCached* self, gen_usize new_capacity)
-{
-	GEN_ASSERT(self != gen_nullptr);
-	GEN_ASSERT(*self != gen_nullptr);
-	GEN_ASSERT(new_capacity > 0);
-	gen_ArrayHeader* header = gen_array_get_header(*self);
-	if (new_capacity == header->Capacity)
-		return true;
-	if (new_capacity < header->Num)
-	{
-		header->Num = new_capacity;
-		return true;
-	}
-	gen_usize        size       = sizeof(gen_ArrayHeader) + sizeof(gen_StrCached) * new_capacity;
-	gen_ArrayHeader* new_header = gen_cast(gen_ArrayHeader*, gen_alloc(header->Allocator, size));
-	if (new_header == 0)
-		return false;
-	gen_mem_move(new_header, header, sizeof(gen_ArrayHeader) + sizeof(gen_StrCached) * header->Num);
-	new_header->Capacity = new_capacity;
-	gen_allocator_free(header->Allocator, &header);
-	*self = gen_cast(gen_StrCached*, new_header + 1);
-	return true;
-}
-
-#pragma endregion gen_Array_gen_StrCached
 
 #pragma region gen_Builder
 

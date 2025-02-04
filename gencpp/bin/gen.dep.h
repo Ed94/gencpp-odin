@@ -593,6 +593,8 @@ size_t gen_example_hash__P_long_long( long long val ) { return val * 2654435761u
 // GEN_FUNCTION_GENERIC_EXAMPLE_DIRECT_TYPE( GEN_GenericExampleType );
 #pragma endregion _Generic Macros
 
+GEN_API_C_BEGIN
+
 #pragma region Basic Types
 
 #define GEN_U8_MIN 0u
@@ -5045,5 +5047,7 @@ inline gen_StrBuilder gen_csv_write_string(gen_AllocatorInfo a, gen_CSV_Object* 
 {
 	return gen_csv_write_strbuilder_delimiter(a, obj, ',');
 }
+
+GEN_API_C_END
 
 GEN_NS_END
