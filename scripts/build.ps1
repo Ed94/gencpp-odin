@@ -90,22 +90,20 @@ if ( $lib )
 	. $vendor_toolchain
 
 	$path_bin = join-path $path_gencpp bin
-	verify-path $path_bin
+	verify-path $path_build
 
-	$includes = @( $path_ )
-	$unit     = join-path $path_gencpp "gen.c"
+	$includes = @( $path_gencpp )
+	$unit     = join-path $path_gencpp "gencpp_c11.c"
 	$path_lib = join-path $path_bin    "gencpp_c11.lib"
 
 	$compiler_args = @()
 	$compiler_args += $flag_all_c
 	$compiler_args += $flag_updated_cpp_macro
 	$compiler_args += $flag_c11
-	$compiler_args += ( $flag_define + 'GEN_DONT_ENFORCE_GEN_TIME_GUARD' )
-	$compiler_args += ( $flag_define + 'GEN_DEFINE_LIBRARY_CORE_CONSTANTS' )
-	$compiler_args += ( $flag_define + 'GEN_ENFORCE_STRONG_CODE_TYPES' )
-	$compiler_args += ( $flag_define + 'GEN_EXPOSE_BACKEND' )
 
 	$linker_args = @()
+	write-host "path_lib: $path_lib"
+	write-host "unit    : $unit"
 	$result = build-simple $path_build $includes $compiler_args $linker_args $unit $path_lib
 }
 

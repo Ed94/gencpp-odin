@@ -558,12 +558,14 @@ if ( $vendor -match "msvc" )
 
 		$compiler_args += $flag_compile, $unit
 		if ( (run-compiler $compiler $unit $compiler_args) -eq $false ) {
+			write-host "BUILD-SIMPLE: FAILED TO COMPILE"
 			return $false;
 		}
 
 		# Check if output is a static library
 		if ( $binary -match '\.lib$' )
 		{
+			write-host "Running archiver for $binary"
 			$lib_args  = @()
 			$lib_args += $flag_nologo
 			$lib_args += $flag_link_win_machine_64
