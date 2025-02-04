@@ -1013,7 +1013,7 @@ void gen_heap_stats_check( void )
 typedef struct gen__heap_alloc_info gen__heap_alloc_info;
 struct gen__heap_alloc_info
 {
-	gen_ssize    size;
+	gen_ssize size;
 	void* physical_start;
 };
 
@@ -1588,6 +1588,122 @@ gen_StrBuilder gen_strbuilder_make_reserve( gen_AllocatorInfo allocator, gen_ssi
 	header->Length    = 0;
 
 	gen_StrBuilder result = { gen_rcast(char*, allocation) + header_size };
+	return result;
+}
+
+bool gen_strbuilder_make_space_for(gen_StrBuilder* str, char const* to_append, gen_ssize add_len)
+{
+	gen_ssize available = gen_strbuilder_avail_space(* str);
+
+	if (available >= add_len) {
+		return true;
+	}
+	else
+	{
+		gen_ssize new_len, old_size, new_size;
+		void* ptr;
+		void* new_ptr;
+
+		gen_AllocatorInfo allocator = gen_strbuilder_get_header(* str)->Allocator;
+		gen_StrBuilderHeader* header    = gen_nullptr;
+
+		new_len  = gen_strbuilder_grow_formula(gen_strbuilder_length(* str) + add_len);
+		ptr      = gen_strbuilder_get_header(* str);
+		old_size = gen_size_of(gen_StrBuilderHeader) + gen_strbuilder_length(* str) + 1;
+		new_size = gen_size_of(gen_StrBuilderHeader) + new_len + 1;
+
+		new_ptr = gen_resize(allocator, ptr, old_size, new_size);
+
+		if (new_ptr == gen_nullptr)
+			return false;
+
+		header = gen_rcast(gen_StrBuilderHeader*, new_ptr);
+		header->Allocator = allocator;
+		header->Capacity  = new_len;
+
+		char** Data = gen_rcast(char**, str);
+		* Data = gen_rcast(char*, header + 1);
+
+		return true;
+	}
+}
+
+bool gen_strbuilder_append_c_str_len(gen_StrBuilder* str, char const* gen_c_str_to_append, gen_ssize append_length)
+{
+	GEN_ASSERT(str != gen_nullptr);
+	if ( gen_rcast(gen_sptr, gen_c_str_to_append) > 0)
+	{
+		gen_ssize curr_len = gen_strbuilder_length(* str);
+
+		if ( ! gen_strbuilder_make_space_for(str, gen_c_str_to_append, append_length))
+			return false;
+
+		gen_StrBuilderHeader* header = gen_strbuilder_get_header(* str);
+
+		char* Data = * str;
+		gen_mem_copy( Data + curr_len, gen_c_str_to_append, append_length);
+
+		Data[curr_len + append_length] = '\0';
+
+		header->Length = curr_len + append_length;
+	}
+	return gen_c_str_to_append != gen_nullptr;
+}
+
+void gen_strbuilder_trim(gen_StrBuilder str, char const* cut_set)
+{
+	gen_ssize len = 0;
+
+	char* start_pos = str;
+	char* gen_end_pos   = gen_scast(char*, str) + gen_strbuilder_length(str) - 1;
+
+	while (start_pos <= gen_end_pos && gen_char_first_occurence(cut_set, *start_pos))
+	start_pos++;
+
+	while (gen_end_pos > start_pos && gen_char_first_occurence(cut_set, *gen_end_pos))
+	gen_end_pos--;
+
+	len = gen_scast(gen_ssize, (start_pos > gen_end_pos) ? 0 : ((gen_end_pos - start_pos) + 1));
+
+	if (str != start_pos)
+		gen_mem_move(str, start_pos, len);
+
+	str[len] = '\0';
+
+	gen_strbuilder_get_header(str)->Length = len;
+}
+
+gen_StrBuilder gen_strbuilder_visualize_whitespace(gen_StrBuilder const str)
+{
+	gen_StrBuilderHeader* header = (gen_StrBuilderHeader*)(gen_scast(char const*, str) - sizeof(gen_StrBuilderHeader));
+	gen_StrBuilder        result = gen_strbuilder_make_reserve(header->Allocator, gen_strbuilder_length(str) * 2); // Assume worst case for space requirements.
+
+	for (char const* c = gen_strbuilder_begin(str); c != gen_strbuilder_end(str); c = gen_strbuilder_next(str, c))
+	switch ( * c )
+	{
+		case ' ':
+			gen_strbuilder_append_str(& result, txt("·"));
+		break;
+		case '\t':
+			gen_strbuilder_append_str(& result, txt("→"));
+		break;
+		case '\n':
+			gen_strbuilder_append_str(& result, txt("↵"));
+		break;
+		case '\r':
+			gen_strbuilder_append_str(& result, txt("⏎"));
+		break;
+		case '\v':
+			gen_strbuilder_append_str(& result, txt("⇕"));
+		break;
+		case '\f':
+			gen_strbuilder_append_str(& result, txt("⌂"));
+		break;
+		default:
+			gen_strbuilder_append_char(& result, * c);
+		break;
+	}
+
 	return result;
 }
 

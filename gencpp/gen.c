@@ -1118,11 +1118,11 @@ gen_Code result = gen_make_code();
 gen_StrBuilder gen_code__to_strbuilder( gen_Code self)
 {
 gen_StrBuilder result = gen_strbuilder_make_str( gen__ctx->Allocator_Temp, txt("") );
-	gen_code_to_strbuilder_ptr( self, & result );
+	gen_code_to_strbuilder_ref( self, & result );
 	return result;
 }
 
-void gen_code__to_strbuilder_ptr( gen_Code self,  gen_StrBuilder *  result)
+void gen_code__to_strbuilder_ref( gen_Code self,  gen_StrBuilder *  result)
 {
 GEN_ASSERT(self != gen_nullptr);
 	gen_local_persist gen_thread_local
@@ -2041,21 +2041,6 @@ switch ( self->Type )
 	return false;
 }
 
-inline
-gen_StrBuilder gen_attributes_to_strbuilder(gen_CodeAttributes attributes) {
-	GEN_ASSERT(attributes);
-	char* raw = gen_ccast(char*, gen_str_duplicate( attributes->Content, gen__ctx->Allocator_Temp ).Ptr);
-	gen_StrBuilder result = { raw };
-	return result;
-}
-
-inline
-void gen_attributes_to_strbuilder_ref(gen_CodeAttributes attributes, gen_StrBuilder* result) {
-	GEN_ASSERT(attributes);
-	GEN_ASSERT(result);
-	gen_strbuilder_append_str(result, attributes->Content);
-}
-
 gen_StrBuilder gen_body_to_strbuilder(gen_CodeBody body)
 {
 	GEN_ASSERT(body);
@@ -2085,20 +2070,6 @@ gen_StrBuilder gen_body_to_strbuilder(gen_CodeBody body)
 	return result;
 }
 
-void gen_body_to_strbuilder_ref( gen_CodeBody body, gen_StrBuilder* result )
-{
-	GEN_ASSERT(body   != gen_nullptr);
-	GEN_ASSERT(result != gen_nullptr);
-	gen_Code curr = body->Front;
-	gen_s32  left = body->NumEntries;
-	while ( left -- )
-	{
-		gen_code_to_strbuilder_ptr(curr, result);
-		// gen_strbuilder_append_fmt( result, "%SB", gen_code_to_strbuilder(curr) );
-		++curr;
-	}
-}
-
 void gen_body_to_strbuilder_export( gen_CodeBody body, gen_StrBuilder* result )
 {
 	GEN_ASSERT(body   != gen_nullptr);
@@ -2109,7 +2080,7 @@ void gen_body_to_strbuilder_export( gen_CodeBody body, gen_StrBuilder* result )
 	gen_s32  left = body->NumEntries;
 	while ( left-- )
 	{
-		gen_code_to_strbuilder_ptr(curr, result);
+		gen_code_to_strbuilder_ref(curr, result);
 		// gen_strbuilder_append_fmt( result, "%SB", gen_code_to_strbuilder(curr) );
 		++curr;
 	}
@@ -2117,23 +2088,9 @@ void gen_body_to_strbuilder_export( gen_CodeBody body, gen_StrBuilder* result )
 	gen_strbuilder_append_fmt( result, "};\n" );
 }
 
-inline
-gen_StrBuilder gen_comment_to_strbuilder(gen_CodeComment comment) {
-	GEN_ASSERT(comment);
-	char* raw = gen_ccast(char*, gen_str_duplicate( comment->Content, gen__ctx->Allocator_Temp ).Ptr);
-	gen_StrBuilder result = { raw };
-	return result;
-}
-
-inline
-void gen_comment_to_strbuilder_ref(gen_CodeComment comment, gen_StrBuilder* result) {
-	GEN_ASSERT(comment);
-	GEN_ASSERT(result);
-	gen_strbuilder_append_str(result, comment->Content);
-}
-
 gen_StrBuilder gen_constructor__to_strbuilder(gen_CodeConstructor self)
 {
+	GEN_ASSERT(self);
 	gen_StrBuilder result = gen_strbuilder_make_reserve( gen__ctx->Allocator_Temp, 128 );
 	switch (self->Type)
 	{
@@ -2149,6 +2106,8 @@ gen_StrBuilder gen_constructor__to_strbuilder(gen_CodeConstructor self)
 
 void gen_constructor__to_strbuilder_def(gen_CodeConstructor self, gen_StrBuilder* result )
 {
+	GEN_ASSERT(self);
+	GEN_ASSERT(result);
 	gen_Code ClassStructParent = self->Parent->Parent;
 	if (ClassStructParent) {
 		gen_strbuilder_append_str( result, ClassStructParent->Name );
@@ -2173,6 +2132,8 @@ void gen_constructor__to_strbuilder_def(gen_CodeConstructor self, gen_StrBuilder
 
 void gen_constructor__to_strbuilder_fwd(gen_CodeConstructor self, gen_StrBuilder* result )
 {
+	GEN_ASSERT(self);
+	GEN_ASSERT(result);
 	gen_Code ClassStructParent = self->Parent->Parent;
 	if (ClassStructParent) {
 		gen_strbuilder_append_str( result, ClassStructParent->Name );
@@ -2197,6 +2158,7 @@ void gen_constructor__to_strbuilder_fwd(gen_CodeConstructor self, gen_StrBuilder
 
 gen_StrBuilder gen_class_to_strbuilder( gen_CodeClass self )
 {
+	GEN_ASSERT(self);
 	gen_StrBuilder result = gen_strbuilder_make_reserve( gen__ctx->Allocator_Temp, 512 );
 	switch ( self->Type )
 	{
@@ -2213,6 +2175,7 @@ gen_StrBuilder gen_class_to_strbuilder( gen_CodeClass self )
 void gen_class_to_strbuilder_def( gen_CodeClass self, gen_StrBuilder* result )
 {
 	GEN_ASSERT(self);
+	GEN_ASSERT(result);
 
 	if ( gen_bitfield_is_set( gen_u32, self->ModuleFlags, ModuleFlag_Export ))
 		gen_strbuilder_append_str( result, txt("export ") );
@@ -2227,7 +2190,7 @@ void gen_class_to_strbuilder_def( gen_CodeClass self, gen_StrBuilder* result )
 	if ( self->Name.Len )
 		gen_strbuilder_append_str( result, self->Name );
 
-	if (self->Specs && gen_specifiers_has(self->Specs, Spec_Final) > -1)
+	if (self->Specs && gen_specifiers_has(self->Specs, Spec_Final))
 		gen_strbuilder_append_str(result, txt(" final"));
 
 	if ( self->ParentType )
@@ -2260,6 +2223,7 @@ void gen_class_to_strbuilder_def( gen_CodeClass self, gen_StrBuilder* result )
 void gen_class_to_strbuilder_fwd( gen_CodeClass self, gen_StrBuilder* result )
 {
 	GEN_ASSERT(self);
+	GEN_ASSERT(result);
 
 	if ( gen_bitfield_is_set( gen_u32, self->ModuleFlags, ModuleFlag_Export ))
 		gen_strbuilder_append_str( result, txt("export ") );
@@ -2279,13 +2243,6 @@ void gen_class_to_strbuilder_fwd( gen_CodeClass self, gen_StrBuilder* result )
 	}
 }
 
-gen_StrBuilder gen_define_to_strbuilder(gen_CodeDefine define)
-{
-	gen_StrBuilder result = gen_strbuilder_make_reserve( gen__ctx->Allocator_Temp, 512 );
-	gen_define_to_strbuilder_ref(define, & result);
-	return result;
-}
-
 void gen_define_to_strbuilder_ref(gen_CodeDefine define, gen_StrBuilder* result )
 {
 	GEN_ASSERT(define);
@@ -2298,14 +2255,6 @@ void gen_define_to_strbuilder_ref(gen_CodeDefine define, gen_StrBuilder* result 
 	else {
 		gen_strbuilder_append_fmt( result, "#define %S %S", define->Name, define->Body->Content );
 	}
-}
-
-gen_StrBuilder gen_define_params_to_strbuilder(gen_CodeDefineParams params)
-{
-	GEN_ASSERT(params);
-	gen_StrBuilder result = gen_strbuilder_make_reserve( gen__ctx->Allocator_Temp, 128 );
-	gen_define_params_to_strbuilder_ref( params, & result );
-	return result;
 }
 
 void gen_define_params_to_strbuilder_ref(gen_CodeDefineParams self, gen_StrBuilder* result)
@@ -2327,6 +2276,7 @@ void gen_define_params_to_strbuilder_ref(gen_CodeDefineParams self, gen_StrBuild
 
 gen_StrBuilder gen_destructor__to_strbuilder(gen_CodeDestructor self)
 {
+	GEN_ASSERT(self);
 	gen_StrBuilder result = gen_strbuilder_make_reserve( gen__ctx->Allocator_Temp, 128 );
 	switch ( self->Type )
 	{
@@ -2342,6 +2292,8 @@ gen_StrBuilder gen_destructor__to_strbuilder(gen_CodeDestructor self)
 
 void gen_destructor__to_strbuilder_def(gen_CodeDestructor self, gen_StrBuilder* result )
 {
+	GEN_ASSERT(self);
+	GEN_ASSERT(result);
 	if ( self->Name.Len )
 	{
 		gen_strbuilder_append_fmt( result, "%S()", self->Name );
@@ -2361,6 +2313,8 @@ void gen_destructor__to_strbuilder_def(gen_CodeDestructor self, gen_StrBuilder* 
 
 void gen_destructor__to_strbuilder_fwd(gen_CodeDestructor self, gen_StrBuilder* result )
 {
+	GEN_ASSERT(self);
+	GEN_ASSERT(result);
 	if ( self->Specs )
 	{
 		if ( gen_specifiers_has(self->Specs, Spec_Virtual ) )
@@ -2384,6 +2338,7 @@ void gen_destructor__to_strbuilder_fwd(gen_CodeDestructor self, gen_StrBuilder* 
 
 gen_StrBuilder gen_enum_to_strbuilder(gen_CodeEnum self)
 {
+	GEN_ASSERT(self);
 	gen_StrBuilder result = gen_strbuilder_make_reserve( gen__ctx->Allocator_Temp, 512 );
 	switch ( self->Type )
 	{
@@ -2405,6 +2360,8 @@ gen_StrBuilder gen_enum_to_strbuilder(gen_CodeEnum self)
 
 void gen_enum_to_strbuilder_def(gen_CodeEnum self, gen_StrBuilder* result )
 {
+	GEN_ASSERT(self);
+	GEN_ASSERT(result);
 	if ( gen_bitfield_is_set( gen_u32, self->ModuleFlags, ModuleFlag_Export ))
 		gen_strbuilder_append_str( result, txt("export ") );
 
@@ -2438,6 +2395,8 @@ void gen_enum_to_strbuilder_def(gen_CodeEnum self, gen_StrBuilder* result )
 
 void gen_enum_to_strbuilder_fwd(gen_CodeEnum self, gen_StrBuilder* result )
 {
+	GEN_ASSERT(self);
+	GEN_ASSERT(result);
 	if ( gen_bitfield_is_set( gen_u32, self->ModuleFlags, ModuleFlag_Export ))
 		gen_strbuilder_append_str( result, txt("export ") );
 
@@ -2465,6 +2424,8 @@ void gen_enum_to_strbuilder_fwd(gen_CodeEnum self, gen_StrBuilder* result )
 
 void gen_enum_to_strbuilder_class_def(gen_CodeEnum self, gen_StrBuilder* result )
 {
+	GEN_ASSERT(self);
+	GEN_ASSERT(result);
 	if ( gen_bitfield_is_set( gen_u32, self->ModuleFlags, ModuleFlag_Export ))
 		gen_strbuilder_append_str( result, txt("export ") );
 
@@ -2497,6 +2458,8 @@ void gen_enum_to_strbuilder_class_def(gen_CodeEnum self, gen_StrBuilder* result 
 
 void gen_enum_to_strbuilder_class_fwd(gen_CodeEnum self, gen_StrBuilder* result )
 {
+	GEN_ASSERT(self);
+	GEN_ASSERT(result);
 	if ( gen_bitfield_is_set( gen_u32, self->ModuleFlags, ModuleFlag_Export ))
 		gen_strbuilder_append_str( result, txt("export ") );
 
@@ -2516,56 +2479,9 @@ void gen_enum_to_strbuilder_class_fwd(gen_CodeEnum self, gen_StrBuilder* result 
 	}
 }
 
-gen_StrBuilder gen_exec_to_strbuilder(gen_CodeExec exec)
-{
-	GEN_ASSERT(exec);
-	char* raw = gen_ccast(char*, gen_str_duplicate( exec->Content, gen__ctx->Allocator_Temp ).Ptr);
-	gen_StrBuilder result = { raw };
-	return result;
-}
-
-void gen_extern_to_strbuilder(gen_CodeExtern self, gen_StrBuilder* result )
-{
-	if ( self->Body )
-		gen_strbuilder_append_fmt( result, "extern \"%S\"\n{\n%SB\n}\n", self->Name, gen_body_to_strbuilder(self->Body) );
-	else
-		gen_strbuilder_append_fmt( result, "extern \"%S\"\n{}\n", self->Name );
-}
-
-gen_StrBuilder gen_include_to_strbuilder(gen_CodeInclude include)
-{
-	return gen_strbuilder_fmt_buf( gen__ctx->Allocator_Temp, "#include %S\n", include->Content );
-}
-
-void gen_include_to_strbuilder_ref( gen_CodeInclude include, gen_StrBuilder* result )
-{
-	gen_strbuilder_append_fmt( result, "#include %S\n", include->Content );
-}
-
-gen_StrBuilder gen_friend_to_strbuilder(gen_CodeFriend self)
-{
-	gen_StrBuilder result = gen_strbuilder_make_reserve( gen__ctx->Allocator_Temp, 256 );
-	gen_friend_to_strbuilder_ref( self, & result );
-	return result;
-}
-
-void gen_friend_to_strbuilder_ref(gen_CodeFriend self, gen_StrBuilder* result )
-{
-	gen_strbuilder_append_fmt( result, "friend %SB", gen_code_to_strbuilder(self->Declaration) );
-
-	if ( self->Declaration->Type != CT_Function && self->Declaration->Type != CT_Operator && (* result)[ gen_strbuilder_length(* result) - 1 ] != ';' )
-	{
-		gen_strbuilder_append_str( result, txt(";") );
-	}
-
-	if ( self->InlineCmt )
-		gen_strbuilder_append_fmt( result, "  %S", self->InlineCmt->Content );
-	else
-		gen_strbuilder_append_str( result, txt("\n"));
-}
-
 gen_StrBuilder gen_fn_to_strbuilder(gen_CodeFn self)
 {
+	GEN_ASSERT(self);
 	gen_StrBuilder result = gen_strbuilder_make_reserve( gen__ctx->Allocator_Temp, 512 );
 	switch ( self->Type )
 	{
@@ -2581,6 +2497,8 @@ gen_StrBuilder gen_fn_to_strbuilder(gen_CodeFn self)
 
 void gen_fn_to_strbuilder_def(gen_CodeFn self, gen_StrBuilder* result )
 {
+	GEN_ASSERT(self);
+	GEN_ASSERT(result);
 	if ( gen_bitfield_is_set( gen_u32, self->ModuleFlags, ModuleFlag_Export ))
 		gen_strbuilder_append_str( result, txt("export") );
 
@@ -2638,6 +2556,8 @@ void gen_fn_to_strbuilder_def(gen_CodeFn self, gen_StrBuilder* result )
 
 void gen_fn_to_strbuilder_fwd(gen_CodeFn self, gen_StrBuilder* result )
 {
+	GEN_ASSERT(self);
+	GEN_ASSERT(result);
 	if ( gen_bitfield_is_set( gen_u32, self->ModuleFlags, ModuleFlag_Export ))
 		gen_strbuilder_append_str( result, txt("export ") );
 
@@ -2687,9 +2607,9 @@ void gen_fn_to_strbuilder_fwd(gen_CodeFn self, gen_StrBuilder* result )
 			}
 		}
 
-		if ( gen_specifiers_has(self->Specs, Spec_Pure ) >= 0 )
+		if ( gen_specifiers_has(self->Specs, Spec_Pure ) )
 			gen_strbuilder_append_str( result, txt(" = 0") );
-		else if ( gen_specifiers_has(self->Specs, Spec_Delete ) >= 0 )
+		else if ( gen_specifiers_has(self->Specs, Spec_Delete ) )
 			gen_strbuilder_append_str( result, txt(" = delete") );
 	}
 
@@ -2706,15 +2626,10 @@ void gen_fn_to_strbuilder_fwd(gen_CodeFn self, gen_StrBuilder* result )
 		gen_strbuilder_append_str( result, txt(";\n") );
 }
 
-gen_StrBuilder gen_module_to_strbuilder(gen_CodeModule self)
-{
-	gen_StrBuilder result = gen_strbuilder_make_reserve( gen__ctx->Allocator_Temp, 64 );
-	gen_module_to_strbuilder_ref( self, & result );
-	return result;
-}
-
 void gen_module_to_strbuilder_ref(gen_CodeModule self, gen_StrBuilder* result )
 {
+	GEN_ASSERT(self);
+	GEN_ASSERT(result);
 	if (((gen_scast(gen_u32, ModuleFlag_Export) & gen_scast(gen_u32, self->ModuleFlags)) == gen_scast(gen_u32, ModuleFlag_Export)))
 		gen_strbuilder_append_str( result, txt("export "));
 
@@ -2724,23 +2639,9 @@ void gen_module_to_strbuilder_ref(gen_CodeModule self, gen_StrBuilder* result )
 	gen_strbuilder_append_fmt( result, "%S;\n", self->Name );
 }
 
-gen_StrBuilder namespace_to_strbuilder(gen_CodeNS self)
-{
-	gen_StrBuilder result = gen_strbuilder_make_reserve( gen__ctx->Allocator_Temp, 512 );
-	namespace_to_strbuilder_ref( self, & result );
-	return result;
-}
-
-void namespace_to_strbuilder_ref(gen_CodeNS self, gen_StrBuilder* result )
-{
-	if ( gen_bitfield_is_set( gen_u32, self->ModuleFlags, ModuleFlag_Export ))
-		gen_strbuilder_append_str( result, txt("export ") );
-
-	gen_strbuilder_append_fmt( result, "namespace %S\n{\n%SB\n}\n", self->Name, gen_body_to_strbuilder(self->Body) );
-}
-
 gen_StrBuilder gen_code_op_to_strbuilder(gen_CodeOperator self)
 {
+	GEN_ASSERT(self);
 	gen_StrBuilder result = gen_strbuilder_make_reserve( gen__ctx->Allocator_Temp, 512 );
 	switch ( self->Type )
 	{
@@ -2758,6 +2659,8 @@ gen_StrBuilder gen_code_op_to_strbuilder(gen_CodeOperator self)
 
 void gen_code_op_to_strbuilder_def(gen_CodeOperator self, gen_StrBuilder* result )
 {
+	GEN_ASSERT(self);
+	GEN_ASSERT(result);
 	if ( gen_bitfield_is_set( gen_u32, self->ModuleFlags, ModuleFlag_Export ))
 		gen_strbuilder_append_str( result, txt("export ") );
 
@@ -2812,6 +2715,8 @@ void gen_code_op_to_strbuilder_def(gen_CodeOperator self, gen_StrBuilder* result
 
 void gen_code_op_to_strbuilder_fwd(gen_CodeOperator self, gen_StrBuilder* result )
 {
+	GEN_ASSERT(self);
+	GEN_ASSERT(result);
 	if ( gen_bitfield_is_set( gen_u32, self->ModuleFlags, ModuleFlag_Export ))
 		gen_strbuilder_append_str( result, txt("export ") );
 
@@ -2863,6 +2768,7 @@ void gen_code_op_to_strbuilder_fwd(gen_CodeOperator self, gen_StrBuilder* result
 
 gen_StrBuilder gen_opcast_to_strbuilder(gen_CodeOpCast self)
 {
+	GEN_ASSERT(self);
 	gen_StrBuilder result = gen_strbuilder_make_reserve( gen__ctx->Allocator_Temp, 128 );
 	switch ( self->Type )
 	{
@@ -2878,6 +2784,8 @@ gen_StrBuilder gen_opcast_to_strbuilder(gen_CodeOpCast self)
 
 void gen_opcast_to_strbuilder_def(gen_CodeOpCast self, gen_StrBuilder* result )
 {
+	GEN_ASSERT(self);
+	GEN_ASSERT(result);
 	if ( self->Specs )
 	{
 		for ( gen_Specifier* spec = gen_begin_CodeSpecifiers(self->Specs); spec != gen_end_CodeSpecifiers(self->Specs); spec = gen_next_CodeSpecifiers(self->Specs, spec) )
@@ -2915,6 +2823,8 @@ void gen_opcast_to_strbuilder_def(gen_CodeOpCast self, gen_StrBuilder* result )
 
 void gen_opcast_to_strbuilder_fwd(gen_CodeOpCast self, gen_StrBuilder* result )
 {
+	GEN_ASSERT(self);
+	GEN_ASSERT(result);
 	if ( self->Specs )
 	{
 		for ( gen_Specifier* spec = gen_begin_CodeSpecifiers(self->Specs); spec != gen_end_CodeSpecifiers(self->Specs); spec = gen_next_CodeSpecifiers(self->Specs, spec) )
@@ -2948,14 +2858,6 @@ void gen_opcast_to_strbuilder_fwd(gen_CodeOpCast self, gen_StrBuilder* result )
 		gen_strbuilder_append_fmt( result, "operator %SB();  %SB", gen_typename_to_strbuilder(self->ValueType) );
 	else
 		gen_strbuilder_append_fmt( result, "operator %SB();\n", gen_typename_to_strbuilder(self->ValueType) );
-}
-
-gen_StrBuilder gen_params_to_strbuilder(gen_CodeParams self)
-{
-	GEN_ASSERT(self);
-	gen_StrBuilder result = gen_strbuilder_make_reserve( gen__ctx->Allocator_Temp, 128 );
-	gen_params_to_strbuilder_ref( self, & result );
-	return result;
 }
 
 void gen_params_to_strbuilder_ref( gen_CodeParams self, gen_StrBuilder* result )
@@ -3022,62 +2924,6 @@ gen_StrBuilder gen_preprocess_to_strbuilder(gen_CodePreprocessCond self)
 			gen_preprocess_to_strbuilder_endif( self, & result );
 		break;
 	}
-	return result;
-}
-
-void gen_preprocess_to_strbuilder_if(gen_CodePreprocessCond cond, gen_StrBuilder* result )
-{
-	GEN_ASSERT(cond);
-	gen_strbuilder_append_fmt( result, "#if %S", cond->Content );
-}
-
-void gen_preprocess_to_strbuilder_ifdef(gen_CodePreprocessCond cond, gen_StrBuilder* result )
-{
-	GEN_ASSERT(cond);
-	gen_strbuilder_append_fmt( result, "#ifdef %S\n", cond->Content );
-}
-
-void gen_preprocess_to_strbuilder_ifndef(gen_CodePreprocessCond cond, gen_StrBuilder* result )
-{
-	GEN_ASSERT(cond);
-	gen_strbuilder_append_fmt( result, "#ifndef %S", cond->Content );
-}
-
-void gen_preprocess_to_strbuilder_elif(gen_CodePreprocessCond cond, gen_StrBuilder* result )
-{
-	GEN_ASSERT(cond);
-	gen_strbuilder_append_fmt( result, "#elif %S\n", cond->Content );
-}
-
-void gen_preprocess_to_strbuilder_else(gen_CodePreprocessCond cond, gen_StrBuilder* result )
-{
-	GEN_ASSERT(cond);
-	gen_strbuilder_append_str( result, txt("#else\n") );
-}
-
-void gen_preprocess_to_strbuilder_endif(gen_CodePreprocessCond cond, gen_StrBuilder* result )
-{
-	GEN_ASSERT(cond);
-	gen_strbuilder_append_str( result, txt("#endif\n") );
-}
-
-gen_StrBuilder gen_pragma_to_strbuilder(gen_CodePragma self)
-{
-	GEN_ASSERT(self);
-	gen_StrBuilder result = gen_strbuilder_make_reserve( gen__ctx->Allocator_Temp, 256 );
-	gen_pragma_to_strbuilder_ref( self, & result );
-	return result;
-}
-
-void gen_pragma_to_strbuilder_ref(gen_CodePragma self, gen_StrBuilder* result )
-{
-	gen_strbuilder_append_fmt( result, "#pragma %S\n", self->Content );
-}
-
-gen_StrBuilder gen_specifiers_to_strbuilder(gen_CodeSpecifiers self)
-{
-	gen_StrBuilder result = gen_strbuilder_make_reserve( gen__ctx->Allocator_Temp, 64 );
-	gen_specifiers_to_strbuilder_ref( self, & result );
 	return result;
 }
 
@@ -3193,14 +3039,6 @@ void gen_struct_to_strbuilder_fwd( gen_CodeStruct self, gen_StrBuilder* result )
 	}
 }
 
-gen_StrBuilder gen_template_to_strbuilder(gen_CodeTemplate self)
-{
-	GEN_ASSERT(self);
-	gen_StrBuilder result = gen_strbuilder_make_reserve( gen__ctx->Allocator_Temp, 1024 );
-	gen_template_to_strbuilder_ref( self, & result );
-	return result;
-}
-
 void gen_template_to_strbuilder_ref(gen_CodeTemplate self, gen_StrBuilder* result )
 {
 	GEN_ASSERT(self);
@@ -3214,15 +3052,10 @@ void gen_template_to_strbuilder_ref(gen_CodeTemplate self, gen_StrBuilder* resul
 		gen_strbuilder_append_fmt( result, "template<>\n%SB", gen_code_to_strbuilder(self->Declaration) );
 }
 
-gen_StrBuilder gen_typedef_to_strbuilder(gen_CodeTypedef self)
-{
-	gen_StrBuilder result = gen_strbuilder_make_reserve( gen__ctx->Allocator_Temp, 128 );
-	gen_typedef_to_strbuilder_ref( self, & result );
-	return result;
-}
-
 void gen_typedef_to_strbuilder_ref(gen_CodeTypedef self, gen_StrBuilder* result )
 {
+	GEN_ASSERT(self);
+	GEN_ASSERT(result);
 	if ( gen_bitfield_is_set( gen_u32, self->ModuleFlags, ModuleFlag_Export ))
 		gen_strbuilder_append_str( result, txt("export ") );
 
@@ -3256,15 +3089,10 @@ void gen_typedef_to_strbuilder_ref(gen_CodeTypedef self, gen_StrBuilder* result 
 		gen_strbuilder_append_str( result, txt("\n"));
 }
 
-gen_StrBuilder gen_typename_to_strbuilder(gen_CodeTypename self)
-{
-	gen_StrBuilder result = gen_strbuilder_make_str( gen__ctx->Allocator_Temp, txt("") );
-	gen_typename_to_strbuilder_ref( self, & result );
-	return result;
-}
-
 void gen_typename_to_strbuilder_ref(gen_CodeTypename self, gen_StrBuilder* result )
 {
+	GEN_ASSERT(self);
+	GEN_ASSERT(result);
 	#if defined(GEN_USE_NEW_TYPENAME_PARSING)
 		if ( self->ReturnType && self->Params )
 		{
@@ -3321,6 +3149,7 @@ void gen_typename_to_strbuilder_ref(gen_CodeTypename self, gen_StrBuilder* resul
 
 gen_StrBuilder union_to_strbuilder(gen_CodeUnion self)
 {
+	GEN_ASSERT(self);
 	gen_StrBuilder result = gen_strbuilder_make_reserve( gen__ctx->Allocator_Temp, 512 );
 	switch ( self->Type )
 	{
@@ -3336,6 +3165,8 @@ gen_StrBuilder union_to_strbuilder(gen_CodeUnion self)
 
 void union_to_strbuilder_def(gen_CodeUnion self, gen_StrBuilder* result )
 {
+	GEN_ASSERT(self);
+	GEN_ASSERT(result);
 	if ( gen_bitfield_is_set( gen_u32, self->ModuleFlags, ModuleFlag_Export ))
 		gen_strbuilder_append_str( result, txt("export ") );
 
@@ -3384,22 +3215,6 @@ void union_to_strbuilder_fwd(gen_CodeUnion self, gen_StrBuilder* result )
 		gen_strbuilder_append_str( result, txt(";\n"));
 }
 
-gen_StrBuilder gen_using_to_strbuilder(gen_CodeUsing self)
-{
-	GEN_ASSERT(self);
-	gen_StrBuilder result = gen_strbuilder_make_reserve( gen__ctx->Allocator_Temp, 128 );
-	switch ( self->Type )
-	{
-		case CT_Using:
-			gen_using_to_strbuilder_ref( self, & result );
-		break;
-		case CT_Using_Namespace:
-			gen_using_to_strbuilder_ns( self, & result );
-		break;
-	}
-	return result;
-}
-
 void gen_using_to_strbuilder_ref(gen_CodeUsing self, gen_StrBuilder* result )
 {
 	GEN_ASSERT(self);
@@ -3435,26 +3250,6 @@ void gen_using_to_strbuilder_ref(gen_CodeUsing self, gen_StrBuilder* result )
 		gen_strbuilder_append_fmt( result, "  %S\n", self->InlineCmt->Content );
 	else
 		gen_strbuilder_append_str( result, txt("\n"));
-}
-
-inline
-void gen_using_to_strbuilder_ns(gen_CodeUsing self, gen_StrBuilder* result )
-{
-	GEN_ASSERT(self);
-	GEN_ASSERT(result);
-	if ( self->InlineCmt )
-		gen_strbuilder_append_fmt( result, "using namespace $SC;  %S", self->Name, self->InlineCmt->Content );
-	else
-		gen_strbuilder_append_fmt( result, "using namespace %S;\n", self->Name );
-}
-
-inline
-gen_StrBuilder gen_var_to_strbuilder(gen_CodeVar self)
-{
-	GEN_ASSERT(self);
-	gen_StrBuilder result = gen_strbuilder_make_reserve( gen__ctx->Allocator_Temp, 256 );
-	gen_var_to_strbuilder_ref( self, & result );
-	return result;
 }
 
 gen_neverinline
@@ -5370,9 +5165,9 @@ gen_CodeTypename gen_def__type(gen_Str name, gen_Opts_def_type p)
 		GEN_DEBUG_TRAP();
 		return gen_InvalidCode;
 	}
-	gen_Code           arrayexpr  = p.arrayexpr;
-	gen_CodeSpecifiers specifiers = p.specifiers;
-	gen_CodeAttributes attributes = p.attributes;
+	gen_Code           gen_array_expr = p.gen_array_expr;
+	gen_CodeSpecifiers specifiers     = p.specifiers;
+	gen_CodeAttributes attributes     = p.attributes;
 	if (p.attributes && p.attributes->Type != CT_PlatformAttributes)
 	{
 		gen_log_failure("gen::gen_def_type: attributes is not of attributes type - %s", gen_code_debug_str((gen_Code)p.attributes));
@@ -5385,9 +5180,9 @@ gen_CodeTypename gen_def__type(gen_Str name, gen_Opts_def_type p)
 		GEN_DEBUG_TRAP();
 		return gen_InvalidCode;
 	}
-	if (p.arrayexpr && p.arrayexpr->Type != CT_Untyped)
+	if (p.gen_array_expr && p.gen_array_expr->Type != CT_Untyped)
 	{
-		gen_log_failure("gen::gen_def_type: arrayexpr is not of untyped type - %s", gen_code_debug_str((gen_Code)p.arrayexpr));
+		gen_log_failure("gen::gen_def_type: arrayexpr is not of untyped type - %s", gen_code_debug_str((gen_Code)p.gen_array_expr));
 		GEN_DEBUG_TRAP();
 		return gen_InvalidCode;
 	}
@@ -5396,7 +5191,7 @@ gen_CodeTypename gen_def__type(gen_Str name, gen_Opts_def_type p)
 	result->Type            = CT_Typename;
 	result->Attributes      = p.attributes;
 	result->Specs           = p.specifiers;
-	result->ArrExpr         = p.arrayexpr;
+	result->ArrExpr         = p.gen_array_expr;
 	result->TypeTag         = p.type_tag;
 	return result;
 }
@@ -7063,6 +6858,11 @@ void gen_lex_found_token(gen_LexContext* ctx)
 	}
 
 	gen_TokType type = gen_str_to_toktype(ctx->token.Text);
+
+	if (type == Tok_Preprocess_Define || type == Tok_Preprocess_Include)
+	{
+		ctx->token.Flags |= TF_Identifier;
+	}
 
 	if (type <= Tok_Access_Public && type >= Tok_Access_Private)
 	{
@@ -11058,10 +10858,10 @@ gen_internal inline gen_CodeParams gen_parse_params(bool use_template_capture)
 		}
 		// ( <gen_Macro> <ValueType>
 
-		if (check(Tok_Identifier))
+		if (check(Tok_Identifier) || gen_bitfield_is_set(gen_u32, currtok.Flags, TF_Identifier))
 		{
 			name = currtok;
-			eat(Tok_Identifier);
+			eat(currtok.Type);
 			// ( <gen_Macro> <ValueType> <Name>
 		}
 
@@ -11170,10 +10970,10 @@ gen_internal inline gen_CodeParams gen_parse_params(bool use_template_capture)
 
 			name = gen_NullToken;
 
-			if (check(Tok_Identifier))
+			if (check(Tok_Identifier) || gen_bitfield_is_set(gen_u32, currtok.Flags, TF_Identifier))
 			{
 				name = currtok;
-				eat(Tok_Identifier);
+				eat(currtok.Type);
 				// ( <gen_Macro> <ValueType> <Name> = <Expression>, <gen_Macro> <ValueType> <Name>
 			}
 
