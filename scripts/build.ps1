@@ -149,3 +149,5 @@ if ( $examples )
 	pop-location
 }
 #endregon Building
+
+pop-location
