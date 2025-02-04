@@ -19,7 +19,7 @@ The library can already be used to generate code just fine, but the parser is wh
 
 ## Bindings Info
 
-***Note: These bindings have not been well tested. Any opened issues are appreciated.***
+***Note: These bindings have not been well tested. Any reported issues are appreciated.***
 
 The c11 variant of the library is used. Any inlines are re-implemented. Because the library dependencies are derived from zpl they are very compatible with odin's memory allocation model. Thus all data structures are trasparently defined with the bindings.
 

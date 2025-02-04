@@ -13,7 +13,7 @@
 	|  \_____|\___}_l |_|\___} .__/| .__/ {_____/ \__\__/_l\__. |\___/\__,_l   \_____/ \__,_l|_|_l |_|  |
 	|                        | |   | |                      __} |                                       |
 	|                        l_l   l_l                     {___/                                        |
-	! ---------------------------------------------------------------------------- VERSION: v0.24-Alpha |
+	! ---------------------------------------------------------------------------- VERSION: v0.25-Alpha |
 	! ==================================================================================================|
 	! WARNING: THIS IS AN ALPHA VERSION OF THE LIBRARY, USE AT YOUR OWN DISCRETION                      |
 	! NEVER DO CODE GENERATION WITHOUT AT LEAST HAVING CONTENT IN A CODEBASE UNDER VERSION CONTROL      |
@@ -22,6 +22,8 @@
 package gencpp
 
 import c "core:c"
+import   "core:c/libc"
+import   "core:fmt"
 import   "core:mem"
 import   "core:reflect"
 import   "core:runtime"
@@ -1707,6 +1709,8 @@ validate_body :: proc {
 	body_validate_body,
 }
 
+body_validate_body :: #force_inline proc(body : Code_Body) -> bool { return code__validate_body(transmute(Code) body) }
+
 code_append :: proc(self, other : Code) {
 	assert(self != nil)
 	assert(other != nil)
@@ -2840,8 +2844,25 @@ Opts_Def_Enum :: struct {
 	type_macro : Code,
 }
 
-def_enum :: proc() {
-
+def_enum :: #force_inline proc(
+	name       : string,
+	body       : Code_Body       = nil,
+	type       : Code_Typename   = nil,
+	specifier  : Enum_Decl       = .None,
+	attributes : Code_Attributes = nil,
+	mflags     : Module_Flags    = .None,
+	type_macro : Code            = nil,
+) -> Code_Enum
+{
+	opts := Opts_Def_Enum {
+		body,
+		type,
+		specifier,
+		attributes,
+		mflags,
+		type_macro,
+	}
+	return gen.def__enum(name, opts)
 }
 
 Opts_Def_Function :: struct {
@@ -2853,24 +2874,63 @@ Opts_Def_Function :: struct {
 	mflags     : Module_Flags,
 }
 
-def_function :: proc() {
-
+def_function :: #force_inline proc(
+	name       : string,
+	params     : Code_Params     = nil,
+	ret_type   : Code_Typename   = nil,
+	body       : Code_Body       = nil,
+	specs      : Code_Specifiers = nil,
+	attributes : Code_Attributes = nil,
+	mflags     : Module_Flags    = .None,
+) -> Code_Fn
+{
+	opts := Opts_Def_Function {
+		params,
+		ret_type,
+		body,
+		specs,
+		attributes,
+		mflags,
+	}
+	return gen.def__function(name, opts)
 }
 
 Opts_Def_Include   :: struct { is_foreign : b32 } 
 Opts_Def_Module    :: struct { mflags     : Module_Flags }
 Opts_Def_Namespace :: struct { mflags     : Module_Flags }
 
-def_include :: proc() {
-
+def_include :: #force_inline proc(
+	content    : string,
+	is_foreign : b32 = false,
+) -> Code_Include
+{
+	opts := Opts_Def_Include {
+		is_foreign,
+	}
+	return gen.def__include(content, opts)
 }
 
-def_module :: proc() {
-
+def_module :: #force_inline proc(
+	name   : string,
+	mflags : Module_Flags = .None,
+) -> Code_Module
+{
+	opts := Opts_Def_Module {
+		mflags,
+	}
+	return gen.def__module(name, opts)
 }
 
-def_namespace :: proc() {
-
+def_namespace :: #force_inline proc(
+	name   : string,
+	body   : Code_Body,
+	mflags : Module_Flags = .None,
+) -> Code_NS
+{
+	opts := Opts_Def_Namespace {
+		mflags,
+	}
+	return gen.def__namespace(name, body, opts)
 }
 
 Opts_Def_Operator :: struct {
@@ -2882,8 +2942,26 @@ Opts_Def_Operator :: struct {
 	mflags     : Module_Flags,
 }
 
-def_operator :: proc() {
-
+def_operator :: #force_inline proc(
+	op         : Operator,
+	nspace     : string,
+	params     : Code_Params     = nil,
+	ret_type   : Code_Typename   = nil,
+	body       : Code_Body       = nil,
+	specifiers : Code_Specifiers = nil,
+	attributes : Code_Attributes = nil,
+	mflags     : Module_Flags    = .None,
+) -> Code_Operator
+{
+	opts := Opts_Def_Operator {
+		params,
+		ret_type,
+		body,
+		specifiers,
+		attributes,
+		mflags,
+	}
+	return gen.def__operator(op, nspace, opts)
 }
 
 Opts_Def_OpCast :: struct {
@@ -2891,8 +2969,45 @@ Opts_Def_OpCast :: struct {
 	specs : Code_Specifiers,
 }
 
+def_opcast :: #force_inline proc(
+	type  : Code_Typename,
+	body  : Code_Body       = nil,
+	specs : Code_Specifiers = nil,
+) -> Code_OpCast
+{
+	opts := Opts_Def_OpCast {
+		body,
+		specs,
+	}
+	return gen.def__operator_cast(type, opts)
+}
+
 Opts_Def_Param    :: struct { value  : Code }
 Opts_Def_Template :: struct { mflags : Module_Flags }
+
+def_param :: #force_inline proc(
+	type : Code_Typename,
+	name : string,
+	value: Code = nil,
+) -> Code_Params
+{
+	opts := Opts_Def_Param {
+		value,
+	}
+	return gen.def__param(type, name, opts)
+}
+
+def_template :: #force_inline proc(
+	params     : Code_Params,
+	definition : Code,
+	mflags     : Module_Flags = .None,
+) -> Code_Template
+{
+	opts := Opts_Def_Template {
+		mflags,
+	}
+	return gen.def__template(params, definition, opts)
+}
 
 Opts_Def_Type :: struct {
 	type_tag   : Typename_Tag,
@@ -2901,9 +3016,40 @@ Opts_Def_Type :: struct {
 	attributes : Code_Attributes,
 }
 
+def_type :: #force_inline proc(
+	name       : string,
+	type_tag   : Typename_Tag   = .None,
+	array_expr : Code           = nil,
+	specifiers : Code_Specifiers = nil,
+	attributes : Code_Attributes = nil,
+) -> Code_Typename
+{
+	opts := Opts_Def_Type {
+		type_tag,
+		array_expr,
+		specifiers,
+		attributes,
+	}
+	return gen.def__type(name, opts)
+}
+
 Opts_Def_Typedef :: struct {
 	attributes : Code_Attributes,
 	mflags     : Module_Flags,
+}
+
+def_typedef :: #force_inline proc(
+	name       : string,
+	type       : Code,
+	attributes : Code_Attributes = nil,
+	mflags     : Module_Flags    = .None,
+) -> Code_Typedef
+{
+	opts := Opts_Def_Typedef {
+		attributes,
+		mflags,
+	}
+	return gen.def__typedef(name, type, opts)
 }
 
 Opts_Def_Union :: struct {
@@ -2911,9 +3057,37 @@ Opts_Def_Union :: struct {
 	mflags     : Module_Flags,
 }
 
+def_union :: #force_inline proc(
+	name       : string,
+	body       : Code_Body,
+	attributes : Code_Attributes = nil,
+	mflags     : Module_Flags    = .None,
+) -> Code_Union
+{
+	opts := Opts_Def_Union {
+		attributes,
+		mflags,
+	}
+	return gen.def__union(name, body, opts)
+}
+
 Opts_Def_Using :: struct {
 	attributes : Code_Attributes,
 	mflags     : Module_Flags,
+}
+
+def_using :: #force_inline proc(
+	name       : string,
+	type       : Code_Typename,
+	attributes : Code_Attributes = nil,
+	mflags     : Module_Flags    = .None,
+) -> Code_Using
+{
+	opts := Opts_Def_Using {
+		attributes,
+		mflags,
+	}
+	return gen.def__using(name, type, opts)
 }
 
 Opts_Def_Variable :: struct {
@@ -2921,6 +3095,24 @@ Opts_Def_Variable :: struct {
 	specifiers : Code_Specifiers,
 	attributes : Code_Attributes,
 	mflags     : Module_Flags,
+}
+
+def_variable :: #force_inline proc(
+	type       : Code_Typename,
+	name       : string,
+	value      : Code           = nil,
+	specifiers : Code_Specifiers = nil,
+	attributes : Code_Attributes = nil,
+	mflags     : Module_Flags    = .None,
+) -> Code_Var
+{
+	opts := Opts_Def_Variable {
+		value,
+		specifiers,
+		attributes,
+		mflags,
+	}
+	return gen.def__variable(type, name, opts)
 }
 
 def_class_body       :: #force_inline proc(codes  : []Code)        -> Code_Body { return def_class_body_arr      (len(codes),  raw_data(codes)) }
@@ -3064,7 +3256,25 @@ Allocator_Info :: struct {
 	data      : rawptr,
 }
 
-odin_allocator_proc_wrapper :: proc(
+allocation_type_to_allocator_mode :: proc(type : Allocation_Type) -> mem.Allocator_Mode {
+	switch type {
+		case .Alloc:    return .Alloc
+		case .Free:     return .Free
+		case .Free_All: return .Free_All
+		case .Resize:   return .Resize
+	}
+}
+
+allocator_mode_to_allocation_type :: proc(mode : mem.Allocator_Mode) -> Allocation_Type {
+	switch mode {
+		case .Alloc, .Alloc_Non_Zeroed:   return .Alloc
+		case .Free:                       return .Free
+		case .Free_All:                   return .FreeAll
+		case .Resize, .Resize_Non_Zeroed: return .Resize
+	}
+}
+
+odin_allocator_wrapper_proc :: proc(
 	allocator_data : rawptr, 
 	type           : Allocation_Type, 
 	size           : c.ssize_t, 
@@ -3073,18 +3283,37 @@ odin_allocator_proc_wrapper :: proc(
 	old_size       : c.ssize_t,
 	flags: u64) -> rawptr
 {
-	info := transmute(mem.Allocator) allocator_data
-	memory, error := info.procedure(info.data, type, size, alignment, old_memory, old_size)
+	info := transmute(^mem.Allocator) allocator_data
+	memory, error := info.procedure(info.data, allocation_type_to_allocator_mode(type), size, alignment, old_memory, old_size)
 	assert(error == .None)
 	return raw_data(memory)
 }
 
+allocator_info_wrapper_proc :: proc(allocator_data: rawptr, mode: mem.Allocator_Mode,
+	size, alignment: int,
+	old_memory: rawptr, old_size: int,
+	location: mem.Source_Code_Location = #caller_location) -> ([]byte, mem.Allocator_Error)
+{
+	info       := transmute(^Allocator_Info) allocator_data
+	result_raw := info.procedure(info.data, allocator_mode_to_allocation_type(mode), size, alignment, old_memory, old_size )
+	result     := (cast([^]bytes) result_raw)[ : size]
+	return result, (result_raw != nil ? .None : .Out_Of_Memory)
+}
+
 allocator_from_odin_allocator :: #force_inline proc(allocator : ^mem.Allocator) -> Allocator_Info {
 	result := Allocator_Info { 
-		odin_allocator_proc_wrapper,
+		odin_allocator_wrapper_proc,
 		transmute(rawptr) allocator
 	}
 	return result
+}
+
+allocator_info_to_odin_allocator :: #force_inline proc(alloctor : ^Allocator_Info) -> mem.Allocator {
+	result := { 
+		allocator_info_wrapper_proc,
+		transmute(rawptr) allocator,
+	}
+	return reuslt
 }
 
 Arena :: struct {
@@ -3147,67 +3376,96 @@ Str_Builder :: struct {
 strbuilder_header    :: #force_inline proc(builder : Str_Builder) -> Str_Builder_Header { return mem.ptr_offset(cast(^Str_Builder_Header)(builder.data), -1) }
 strbuilder_to_string :: #force_inline proc(builder : Str_Builder) -> string             { return transmute(string) builder.data[:strbuilder_header(builder).length] }
 
-// strbuilder is fully-inline in the header. So we're just re-implementing here.
-
-strbuilder_make_reserve :: proc(allocator := USE_TEMP_ALLOCATOR, capacity : int) -> Str_Builder {
-	return {}
+strbuilder_make_string :: proc(allocator := USE_TEMP_ALLOCATOR, str : string) -> Str_Builder {
+	if allocator.procedure == nil do allocator = _ctx.allocator_temp
+	return strbuilder_make_length(allocator, transmute(^c.char) raw_data(str), len(str) )
 }
 
-strbuilder_make_str :: proc(allocator := USE_TEMP_ALLOCATOR, str : string) -> Str_Builder {
-	return {}
+// NOTE: The original implementation fo the _fmt related procedures utilized gencpp's c_str_fmt_va 
+// which had custom verbs for string and string builder: %S for string and %SB for Str_Builder
+// This rewrite uses fmt.aprintf instead so those are have changed to just %s for odin's string (equivalent),
+// but for Str_Builder there is no equivalnet and the user must use strbuider_to_string before feeding to the fmt procedure
+strbuilder_fmt :: proc(allocator := USE_TEMP_ALLOCATOR, buf : c.char[], size : int, fmt : string, args: ..any ) -> Str_Builder {
+	if allocator.procedure == nil do allocator = _ctx.allocator_temp
+	res := fmt.aprintf(fmt, ..args, allocator = allocator_info_to_odin_allocator(& allocator))
+	return strbuilder_make_length(allocator, raw_data(res), len(res))
 }
 
-strbuilder_fmt :: proc(allocator := USE_TEMP_ALLOCATOR, buf : c.char[] ) -> Str_Builder {
-	return {}
-}
-
-strbuilder_fmt_buf :: proc(allocator := USE_TEMP_ALLOCATOR ) -> Str_Builder {
-	return {}
-}
-
-strbuilder_join :: proc(allocator := USE_TEMP_ALLOCATOR, ) -> Str_Builder {
-	return {}
-}
-
-strbuilder_make_space_for :: proc(builder : ^Str_Builder, amount : u32) -> bool {
-	return false
+// NOTE: The original implementation fo the _fmt related procedures utilized gencpp's c_str_fmt_va 
+// which had custom verbs for string and string builder: %S for string and %SB for Str_Builder
+// This rewrite uses fmt.bprintf instead so those are have changed to just %s for odin's string (equivalent),
+// but for Str_Builder there is no equivalnet and the user must use strbuider_to_string before feeding to the fmt procedure
+strbuilder_fmt_buf :: proc(allocator := USE_TEMP_ALLOCATOR, fmt : string, args : ..any ) -> Str_Builder {
+	if allocator.procedure == nil do allocator = _ctx.allocator_temp
+	@thread_local @static
+	buf : [mem.Kilobyte * 128]byte
+	res := fmt.bprintf(buf, fmt, ..args, allocator = allocator_info_to_odin_allocator(& allocator))
+	return strbuilder_make_length(allocator, raw_data(res), len(res))
 }
 
 strbuilder_append_char :: proc(builder : ^Str_Builder, char : c.char) -> bool {
-	return false
+	assert(builder != nil)
+	return strbuider_append_c_str_len(builder, & char, 1)
 }
 
 strbuilder_append_string :: proc(builder : ^Str_builder, str : string) -> bool {
-	return false
+	assert(builder != nil)
+	return strbuilder_append_c_str_len(builder, transmute(^c.char) raw_data(str), len(str))
 }
 
-strbuilder_append_fmt :: proc(builder : ^Str_Builder ) -> bool {
-	 return false
+// NOTE: The original implementation fo the _fmt related procedures utilized gencpp's c_str_fmt_va 
+// which had custom verbs for string and string builder: %S for string and %SB for Str_Builder
+// This rewrite uses fmt.aprintf instead so those are have changed to just %s for odin's string (equivalent),
+// but for Str_Builder there is no equivalnet and the user must use strbuider_to_string before feeding to the fmt procedure
+strbuilder_append_fmt :: proc(builder : ^Str_Builder, fmt : string, args : ..any ) -> bool {
+	assert(builder != nil)
+	header := strbuilder_header(^ builder)
+	res := fmt.aprintf(fmt, fmt, ..args, allocator = allocator_info_to_odin_allocator(& header.allocator))
+	return strbuilder_append_c_str_len(build, transmute(^c.char) raw_data(res), len(res))
 }
 
-strbuilder_avail_space :: proc(builder : ^Str_Builder ) -> int {
-	return 0
+// NOTE: The original implementation fo the _fmt related procedures utilized gencpp's c_str_fmt_va 
+// which had custom verbs for string and string builder: %S for string and %SB for Str_Builder
+// This rewrite uses fmt.bprintf instead so those are have changed to just %s for odin's string (equivalent),
+// but for Str_Builder there is no equivalnet and the user must use strbuider_to_string before feeding to the fmt procedure
+strbuilder_append_fmt_buf :: proc(builder : ^Str_Builder ) -> bool {
+	assert(builder != nil)
+	header := strbuilder_header(^ builder)
+	@thread_local @static
+	buf : [mem.Kilobyte * 128]byte
+	res := fmt.bprintf(buf, fmt, ..args, allocator = allocator_info_to_odin_allocator(& header.allocator))
+	return strbuilder_append_c_str_len(build, transmute(^c.char) raw_data(res), len(res))
 }
 
-strbuilder_back :: proc(builder : ^Str_Builder) -> ^c.char {
-	return nil
+strbuilder_avail_space :: proc(builder : Str_Builder ) -> int {
+	header := strbuilder_header(^ builder)
+	return header.capacity - header.length
 }
 
-strbuilder_capacity :: proc(builder : ^Str_Builder) -> int {
-	return 0
+strbuilder_capacity :: proc(builder : Str_Builder) -> int {
+	assert(builder)
+	header := strbuilder_header(^ builder)
+	return header.capacity
 }
 
-strbuilder_clear :: proc(builder : ^Str_Builder) {
-
+strbuilder_clear :: proc(builder : Str_Builder) {
+	strbuilder_header(^ builder).length = 0
 }
 
-strbiulder_duplicate :: proc(builder : ^Str_Builder, allocator := USE_TEMP_ALLOCATOR) -> StrBuilder {
-	return {}
+strbiulder_duplicate :: proc(builder : Str_Builder, allocator := USE_TEMP_ALLOCATOR) -> StrBuilder {
+	if allocator.procedure == nil do allocator = _ctx.allocator_temp
+	return strbuilder_make_string(allocator, strbuilder_to_string(builder))
 }
 
 @(default_calling_convention="c", link_prefix="gen_")
 foreign gen
 {
+	strbuilder_make_reserve   :: proc(allocator : Allocator_Info, capacity  : int) ---
+	strbuilder_make_length    :: proc(allocator : Allocator_Info, str       : ^c.char, length : int) ---
+	strbuilder_make_space_for :: proc(allocator : Allocator_Info, to_append : ^c.char, length : int) -> bool ---
 
+	strbuilder_append_c_str_len     :: proc(builder : ^Str_Builder, to_append : ^c.char, length : int) -> bool ---
+	strbuilder_trim                 :: proc(builder : ^Str_Builder, cut_set   : ^c.char) ---
+	strbuilder_visualize_whitespace :: proc(builder : Str_Builder)
 }
 //#endregion("Backend")
