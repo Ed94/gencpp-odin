@@ -31,7 +31,7 @@ import os "core:os/os2"
 import    "core:strings"
 
 when ODIN_OS == .Windows {
-	foreign import gencpp_c11 "./gencpp/lib/win64/gencpp_c11.lib"
+	foreign import gencpp_c11 "./lib/win64/gencpp_c11.lib"
 }
 else when ODIN_OS == .Linux {
 	// TODO(Ed): Get linux working
@@ -3380,7 +3380,7 @@ $$$$$$$  |\$$$$$$$ |\$$$$$$$\ $$ | \$$\ \$$$$$$$\ $$ |  $$ |\$$$$$$$ |
 */
 //#region("Backend")
 
-@(default_calling_convention="c", link_prefix="gen_")
+@(link_prefix="gen_")
 foreign gencpp_c11
 {
 	_ctx : ^Context
