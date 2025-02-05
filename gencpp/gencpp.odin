@@ -165,6 +165,7 @@ Code_Type :: enum(u32) {
 	Namespace_Body,
 	Operator,
 	Operator_Fwd,
+	Operator_Member,
 	Operator_Member_Fwd,
 	Operator_Cast,
 	Operator_Cast_Fwd,
@@ -218,8 +219,8 @@ codetype_to_keyword_str :: proc "contextless" (type : Code_Type) -> string
 		case .Module:                               return "module"
 		case .Namespace:                            return "namespace"
 		case .Namespace_Body:                       return "__NA__"
-		case .Operator, .Operator_Fwd, \
-			.Operator_Member_Fwd,        \
+		case .Operator, .Operator_Fwd,            \
+			.Operator_Member, .Operator_Member_Fwd, \
 			.Operator_Cast, .Operator_Cast_Fwd:       return "operator"
 		case .Parameters, .Parameters_Define:       return "__NA__"
 		case .Preprocess_Define:                    return "define"
@@ -2646,12 +2647,13 @@ AST_Var :: struct {
 	using _ : struct #raw_union {
 		_PAD_   : [64]byte,
 		using _ : struct {
-			inline_cmt : Code_Comment,
-			attributes : Code_Attributes,
-			specs      : Code_Specifiers,
-			value_type : Code_Typename,
-			value      : Code,
-			next_var   : Code_Var,
+			inline_cmt    : Code_Comment,
+			attributes    : Code_Attributes,
+			specs         : Code_Specifiers,
+			value_type    : Code_Typename,
+			bitfield_size : Code,
+			value         : Code,
+			next_var      : Code_Var,
 		},
 	},
 	name                    : string_cached,

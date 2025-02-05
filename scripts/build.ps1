@@ -148,6 +148,7 @@ if ( $examples )
 
 	push-location $path_examples
 		Invoke-WithColorCodedOutput { & $odin_compiler $build_args }
+		
 	pop-location
 }
 #endregon Building
