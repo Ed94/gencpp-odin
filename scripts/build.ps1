@@ -148,8 +148,22 @@ if ( $examples )
 
 	push-location $path_examples
 		Invoke-WithColorCodedOutput { & $odin_compiler $build_args }
-		
+
 	pop-location
+
+	$path_gen = join-path $path_examples 'gen'
+	verify-path $path_gen
+
+	Push-Location $path_examples
+	if ( Test-Path( $executable ) ) {
+		write-host "`nRunning hellope_gencpp.exe:"
+		$time_taken = Measure-Command { & $executable
+				| ForEach-Object {
+					write-host `t $_ -ForegroundColor Green
+				}
+			}
+	}
+	Pop-Location
 }
 #endregon Building
 
