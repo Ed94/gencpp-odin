@@ -1,12 +1,10 @@
 # gencpp-odin
 
-**NOTE: BINDINGS ARE NOT FINISHED. WILL NOT WORK YET.**
-
 [gencpp](https://github.com/Ed94/gencpp) bindings for the odin programming language
 
 An attempt at simple staged metaprogramming for C/C++. Reflect and generate code for your codebase at runtime!
 
-TODO: Add splash
+![Code_-_Insiders_2025-02-04_22-11-26](https://github.com/user-attachments/assets/83fce096-eb16-423d-893c-986d82130c58)
 
 The library API is a composition of code element constructors, and a non-standards-compliant single-pass C/C++ parser. These build up a code AST to then serialize with a file builder, or can be traversed for staged-reflection of C/C++ code.
 
