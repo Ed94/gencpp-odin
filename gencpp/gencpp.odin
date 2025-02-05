@@ -28,6 +28,7 @@ import    "core:fmt"
 import    "core:mem"
 import    "core:reflect"
 import os "core:os/os2"
+import    "core:strings"
 
 when ODIN_OS == .Windows {
 	foreign import gencpp_c11 "./gencpp/lib/win64/gencpp_c11.lib"
@@ -1414,14 +1415,20 @@ exec_to_strbuilder_ref :: proc(code : Code_Exec, result : ^Str_Builder) {
 	strbuilder_append_string(result, code.content)
 }
 
-extern_to_strbuilder :: proc(extern : Code_Extern, result : ^Str_Builder) {
+extern_to_strbuilder :: proc(extern : Code_Extern) -> Str_Builder {
+	result := strbuilder_make_reserve(_ctx.allocator_temp, 512)
+	extern_to_strbuilder_ref(extern, & result)
+	return result
+}
+
+extern_to_strbuilder_ref :: proc(extern : Code_Extern, result : ^Str_Builder) {
 	assert(extern != nil)
 	assert(result != nil)
 	if extern.body != nil {
-		strbuilder_append_fmt(result, "extern \"%s\"\n{\n%s\n}\n", extern.name, strbuilder_to_string(body_to_strbuilder(extern.body)))
+		strbuilder_append_fmt_buf(result, "extern \"%s\"\n{\n%s\n}\n", extern.name, strbuilder_to_string(body_to_strbuilder(extern.body)))
 	}
 	else {
-		strbuilder_append_fmt(result, "extern \"%s\"\n{}\n", extern.name)
+		strbuilder_append_fmt_buf(result, "extern \"%s\"\n{}\n", extern.name)
 	}
 }
 
@@ -1435,7 +1442,7 @@ friend_to_strbuilder :: proc(friend : Code_Friend) -> Str_Builder {
 friend_to_strbuilder_ref :: proc(friend : Code_Friend, result : ^Str_Builder) {
 	assert(friend != nil)
 	assert(result != nil)
-	strbuilder_append_fmt( result, "friend %s", code_to_string(friend.declaration) );
+	strbuilder_append_fmt_buf( result, "friend %s", code_to_string(friend.declaration) );
 
 	result_str := strbuilder_to_string(result ^)
 	if ( friend.declaration.type != .Function && friend.declaration.type != .Operator && result_str[len(result_str) - 1] != ';' ) {
@@ -1443,7 +1450,7 @@ friend_to_strbuilder_ref :: proc(friend : Code_Friend, result : ^Str_Builder) {
 	}
 
 	if ( friend.inline_cmt != nil ) {
-		strbuilder_append_fmt( result, "  %s", friend.inline_cmt.content );
+		strbuilder_append_fmt_buf( result, "  %s", friend.inline_cmt.content );
 	}
 	else {
 		strbuilder_append_string( result, "\n");
@@ -1458,7 +1465,7 @@ include_to_strbuilder :: proc(include : Code_Include) -> Str_Builder {
 include_to_strbuilder_ref :: proc(include : Code_Include, result : ^Str_Builder) {
 	assert(include != nil)
 	assert(result != nil)
-	strbuilder_append_fmt(result, "#include %s\n", include.content)
+	strbuilder_append_fmt_buf(result, "#include %s\n", include.content)
 }
 
 module_to_strbuilder :: proc(code : Code_Module) -> Str_Builder {
@@ -1499,43 +1506,43 @@ pragma_to_strbuilder :: proc(pragma : Code_Pragma) -> Str_Builder {
 pragam_to_strbuilder_ref :: proc(pragma : Code_Pragma, result : ^Str_Builder) {
 	assert(pragma != nil)
 	assert(result != nil)
-	strbuilder_append_fmt(result, "#pragma %s\n", pragma.content)
+	strbuilder_append_fmt_buf(result, "#pragma %s\n", pragma.content)
 }
 
 preprocess_to_strbuilder_if :: proc(cond : Code_Preprocess_Cond, result : ^Str_Builder) {
 	assert(cond != nil)
 	assert(result != nil)
-	strbuilder_append_fmt(result, "#if %s", cond.content)
+	strbuilder_append_fmt_buf(result, "#if %s", cond.content)
 }
 
 preprocess_to_strbuilder_ifdef :: proc(cond : Code_Preprocess_Cond, result : ^Str_Builder) {
 	assert(cond != nil)
 	assert(result != nil)
-	strbuilder_append_fmt(result, "#ifdef %s\n", cond.content)
+	strbuilder_append_fmt_buf(result, "#ifdef %s\n", cond.content)
 }
 
 preprocess_to_strbuilder_ifndef :: proc(cond : Code_Preprocess_Cond, result : ^Str_Builder) {
 	assert(cond != nil)
 	assert(result != nil)
-	strbuilder_append_fmt(result, "#ifndef %s", cond.content)
+	strbuilder_append_fmt_buf(result, "#ifndef %s", cond.content)
 }
 
 preprocess_to_strbuilder_elif :: proc(cond : Code_Preprocess_Cond, result : ^Str_Builder) {
 	assert(cond != nil)
 	assert(result != nil)
-	strbuilder_append_fmt(result, "#elif %s\n", cond.content)
+	strbuilder_append_fmt_buf(result, "#elif %s\n", cond.content)
 }
 
 preprocess_to_strbuilder_else :: proc(cond : Code_Preprocess_Cond, result : ^Str_Builder) {
 	assert(cond != nil)
 	assert(result != nil)
-	strbuilder_append_fmt(result, "#else\n")
+	strbuilder_append_fmt_buf(result, "#else\n")
 }
 
 preprocess_to_strbuilder_endif :: proc(cond : Code_Preprocess_Cond, result : ^Str_Builder) {
 	assert(cond != nil)
 	assert(result != nil)
-	strbuilder_append_fmt(result, "#endif\n")
+	strbuilder_append_fmt_buf(result, "#endif\n")
 }
 
 specifiers_to_strbuilder :: proc(specifiers : Code_Specifiers) -> Str_Builder {
@@ -1569,7 +1576,7 @@ typename_to_strbuilder :: proc(typename : Code_Typename) -> Str_Builder {
 using_to_strbuilder :: proc(code : Code_Using) -> Str_Builder {
 	assert(code != nil)
 	result := strbuilder_make_reserve(_ctx.allocator_temp, 128)
-	switch code.type {
+	#partial switch code.type {
 		case .Using:
 			using_to_strbuilder_ref(code, & result)
 		case .Using_Namespace:
@@ -1581,11 +1588,11 @@ using_to_strbuilder :: proc(code : Code_Using) -> Str_Builder {
 using_to_strbuilder_ns :: proc(self : Code_Using, builder : ^Str_Builder) {
 	assert(self != nil)
 	assert(builder != nil)
-	if self.inline_cmt {
-		strbuilder_append_fmt(result, "using namespace %s; %s", self.name, self.inline_cmt)
+	if self.inline_cmt != nil {
+		strbuilder_append_fmt_buf(builder, "using namespace %s; %s", self.name, self.inline_cmt)
 	}
 	else {
-		strbuilder_append_fmt(result, "using namespace %s;\n", self.name)
+		strbuilder_append_fmt_buf(builder, "using namespace %s;\n", self.name)
 	}
 }
 
@@ -1602,6 +1609,7 @@ to_string :: proc {
 	body_to_string,
 	class_to_string,
 	comment_to_string,
+	constructor_to_string,
 	define_to_string,
 	define_params_to_string,
 	destructor_to_string,
@@ -1637,7 +1645,7 @@ class_to_string         :: #force_inline proc(class       : Code_Class)         
 define_to_string        :: #force_inline proc(define      : Code_Define)          -> string { return strbuilder_to_string( define_to_strbuilder(define)) }
 define_params_to_string :: #force_inline proc(params      : Code_DefineParams)    -> string { return strbuilder_to_string( define_params_to_strbuilder(params)) }
 destructor_to_string    :: #force_inline proc(destructor  : Code_Destructor)      -> string { return strbuilder_to_string( destructor_to_strbuilder(destructor)) }
-enum_to_string          :: #force_inline proc(code        : Code_Enum)            -> string { return strbuilder_to_string( enum_to_string(code)) }
+enum_to_string          :: #force_inline proc(code        : Code_Enum)            -> string { return strbuilder_to_string( enum_to_strbuilder(code)) }
 exec_to_string          :: #force_inline proc(exec        : Code_Exec)            -> string { return strbuilder_to_string( exec_to_strbuilder(exec)) }
 extern_to_string        :: #force_inline proc(extern      : Code_Extern)          -> string { return strbuilder_to_string( extern_to_strbuilder(extern)) }
 include_to_string       :: #force_inline proc(include     : Code_Include)         -> string { return strbuilder_to_string( include_to_strbuilder(include)) }
@@ -1651,9 +1659,9 @@ params_to_string        :: #force_inline proc(params      : Code_Params)        
 preprocess_to_string    :: #force_inline proc(cond        : Code_Preprocess_Cond) -> string { return strbuilder_to_string( preprocess_to_strbuilder(cond)) }
 pragma_to_string        :: #force_inline proc(pragma      : Code_Pragma)          -> string { return strbuilder_to_string( pragma_to_strbuilder(pragma)) }
 specifiers_to_string    :: #force_inline proc(specifiers  : Code_Specifiers)      -> string { return strbuilder_to_string( specifiers_to_strbuilder(specifiers)) }
-struct_to_string        :: #force_inline proc(code        : Code_Struct)          -> string { return strbuilder_to_string( struct_to_string(code)) }
+struct_to_string        :: #force_inline proc(code        : Code_Struct)          -> string { return strbuilder_to_string( struct_to_strbuilder(code)) }
 template_to_string      :: #force_inline proc(template    : Code_Template)        -> string { return strbuilder_to_string( template_to_strbuilder(template)) }
-typename_to_string      :: #force_inline proc(typename    : Code_Typename)        -> string { return strbuilder_to_string( typename_to_String(typename)) }
+typename_to_string      :: #force_inline proc(typename    : Code_Typename)        -> string { return strbuilder_to_string( typename_to_strbuilder(typename)) }
 typedef_to_string       :: #force_inline proc(typedef     : Code_Typedef)         -> string { return strbuilder_to_string( typedef_to_strbuilder(typedef)) }
 union_to_string         :: #force_inline proc(code        : Code_Union)           -> string { return strbuilder_to_string( union_to_strbuilder(code)) }
 var_to_string           :: #force_inline proc(var         : Code_Var)             -> string { return strbuilder_to_string( var_to_strbuilder(var)) }
@@ -1805,7 +1813,8 @@ code_to_strbuilder :: #force_inline proc(self : Code) -> Str_Builder {
 
 code_type_str :: #force_inline proc(self : Code) -> string {
 	assert(self != nil)
-	return reflect.enum_name_from_value(self.type)
+	result, ok := reflect.enum_name_from_value(self.type)
+	return result
 }
 
 body_append_code :: proc(body : Code_Body, other : Code) {
@@ -1822,7 +1831,7 @@ body_append_body :: proc(body, other : Code_Body) {
 	assert(body != nil)
 	assert(other != nil)
 	assert(body != other)
-	for entry := begin_body(body); entry != end_body(body); entry = next_body(body) {
+	for entry := begin_body(body); entry != end_body(body); entry = next_body(body, entry) {
 		body_append_code(body, entry)
 	}
 }
@@ -1854,10 +1863,10 @@ class_add_interface :: proc(class : Code_Class, type : Code_Typename) {
 	}
 
 	for possible_slot.next != nil {
-		possible_slot.next = transmute(Code_Typename) possible_slot.Next
+		possible_slot = transmute(Code_Typename) possible_slot.next
 	}
 
-	possible_slot.next = type;
+	possible_slot.next = transmute(Code) type;
 }
 
 params_append :: proc(appendee, other : Code_Params) {
@@ -1884,7 +1893,8 @@ params_append :: proc(appendee, other : Code_Params) {
 
 params_get :: proc(params : Code_Params, idx : i32) -> Code_Params {
 	assert(params != nil)
-	params := param
+	param := params
+	idx   := idx
 	for
 	{
 		if ( param.next != nil ) {
@@ -1896,6 +1906,7 @@ params_get :: proc(params : Code_Params, idx : i32) -> Code_Params {
 		idx -= 1
 		if idx <= 0 do break
 	}
+	return param
 }
 
 begin_params :: #force_inline proc(params : Code_Params) -> Code_Params {
@@ -1918,9 +1929,9 @@ next_params :: #force_inline proc(params, params_iter : Code_Params) -> Code_Par
 // define_params_get         -> params_get
 // define_params_has_entries -> params_has_entries
 
-define_params_append      :: #force_inline proc(appendee, other : Code_DefineParams)   { params_append(transmute(Code_Params) appendee, transmute(Code_Params) other) }
-define_params_get         :: #force_inline proc(params : Code_DefineParams, idx : i32) { return transmute(Code_DefineParams) params_get( transmute(Code_Params) params, idx) }
-define_params_has_entires :: #force_inline proc(params : Code_DefineParams) -> bool    { return params_has_entries(transmute(Code_Params) params) }
+define_params_append      :: #force_inline proc(appendee, other : Code_DefineParams)                        { params_append(transmute(Code_Params) appendee, transmute(Code_Params) other) }
+define_params_get         :: #force_inline proc(params : Code_DefineParams, idx : i32) -> Code_DefineParams { return transmute(Code_DefineParams) params_get( transmute(Code_Params) params, idx) }
+define_params_has_entires :: #force_inline proc(params : Code_DefineParams) -> bool                         { return params_has_entries(transmute(Code_Params) params) }
 
 begin_define_params :: #force_inline proc(params : Code_DefineParams) -> Code_DefineParams {
 	assert(params != nil)
@@ -1969,7 +1980,7 @@ specifiers_index_of :: proc(self : Code_Specifiers, spec : Specifier) -> i32 {
 
 specifiers_remove :: proc(self : Code_Specifiers, to_remove : Specifier) -> i32 {
 	assert(self != nil)
-	assert(sef.num_entries < AST_ARRAY_SPECS_CAP)
+	assert(self.num_entries < AST_ARRAY_SPECS_CAP)
 
 	result : i32 = -1
 
@@ -2725,8 +2736,8 @@ set_context :: #force_inline proc(ctx : ^Context) {
 
 def_body :: proc(type : Code_Type) -> Code_Body {
 	valid_def : b32 
-	vaid_def  |= type == .Class_Body
-	vaid_def  |= type == .Enum_Body
+	valid_def |= type == .Class_Body
+	valid_def |= type == .Enum_Body
 	valid_def |= type == .Export_Body
 	valid_def |= type == .Extern_Linkege
 	valid_def |= type == .Function_Body
@@ -2734,11 +2745,11 @@ def_body :: proc(type : Code_Type) -> Code_Body {
 	valid_def |= type == .Namespace_Body
 	valid_def |= type == .Struct_Body
 	valid_def |= type == .Union_Body
-	assert(valid_def)
+	assert(valid_def != false)
 
-	result     := make_code()
+	result     := transmute(Code_Body) make_code()
 	result.type = type
-	return transmute(CodeBody) result
+	return result
 }
 
 token_fmt :: proc() -> string {
@@ -2750,7 +2761,7 @@ Opts_Def_Struct :: struct {
 	parent         : Code_Typename,
 	parent_access  : Access_Spec,
 	attributes     : Code_Attributes,
-	interfaces     : Code_Typename,
+	interfaces     : [^]Code_Typename,
 	num_interfaces : i32,
 	specifiers     : Code_Specifiers,
 	mflags         : Module_Flags,
@@ -2761,7 +2772,7 @@ def_class :: #force_inline proc(name : string,
 	parent         : Code_Typename   = nil,
 	parent_access  : Access_Spec     = .Default,
 	attributes     : Code_Attributes = nil,
-	interface      : []Code_Typename = nil,
+	interfaces     : []Code_Typename = nil,
 	specifiers     : Code_Specifiers = nil,
 	mflags         : Module_Flags    = {},
 ) -> Code_Class
@@ -2772,11 +2783,11 @@ def_class :: #force_inline proc(name : string,
 		parent_access,
 		attributes,
 		raw_data(interfaces),
-		len(interface),
+		cast(i32) len(interfaces),
 		specifiers,
 		mflags
 	}
-	return gen.def__class(name, opts)
+	return def__class(name, opts)
 }
 
 def_struct :: #force_inline proc(name : string, 
@@ -2784,7 +2795,7 @@ def_struct :: #force_inline proc(name : string,
 	parent         : Code_Typename   = nil,
 	parent_access  : Access_Spec     = .Default,
 	attributes     : Code_Attributes = nil,
-	interface      : []Code_Typename = nil,
+	interfaces     : []Code_Typename = nil,
 	specifiers     : Code_Specifiers = nil,
 	mflags         : Module_Flags    = {},
 ) -> Code_Struct
@@ -2795,11 +2806,11 @@ def_struct :: #force_inline proc(name : string,
 		parent_access,
 		attributes,
 		raw_data(interfaces),
-		len(interface),
+		cast(i32) len(interfaces),
 		specifiers,
 		mflags
 	}
-	return gen.def__struct(name, opts)
+	return def__struct(name, opts)
 }
 
 Opts_Def_Constructor :: struct {
@@ -2817,7 +2828,7 @@ def_constructor :: #force_inline proc(
 	opts := Opts_Def_Constructor {
 		params, initializer_list, body
 	}
-	return gen.def__constructor(opts)
+	return def__constructor(opts)
 } 
 
 Opts_Def_Define :: struct {
@@ -2840,7 +2851,7 @@ def_define :: #force_inline proc(name : string, type : Macro_Type,
 		flags, 
 		dont_register_to_preprocess_macros
 	}
-	return def__define(name, opts)
+	return def__define(name, type, opts)
 }
 
 Opts_Def_Destructor :: struct {
@@ -2883,7 +2894,7 @@ def_enum :: #force_inline proc(
 		mflags,
 		type_macro,
 	}
-	return gen.def__enum(name, opts)
+	return def__enum(name, opts)
 }
 
 Opts_Def_Function :: struct {
@@ -2913,7 +2924,7 @@ def_function :: #force_inline proc(
 		attributes,
 		mflags,
 	}
-	return gen.def__function(name, opts)
+	return def__function(name, opts)
 }
 
 Opts_Def_Include   :: struct { is_foreign : b32 } 
@@ -2928,7 +2939,7 @@ def_include :: #force_inline proc(
 	opts := Opts_Def_Include {
 		is_foreign,
 	}
-	return gen.def__include(content, opts)
+	return def__include(content, opts)
 }
 
 def_module :: #force_inline proc(
@@ -2939,7 +2950,7 @@ def_module :: #force_inline proc(
 	opts := Opts_Def_Module {
 		mflags,
 	}
-	return gen.def__module(name, opts)
+	return def__module(name, opts)
 }
 
 def_namespace :: #force_inline proc(
@@ -2951,7 +2962,7 @@ def_namespace :: #force_inline proc(
 	opts := Opts_Def_Namespace {
 		mflags,
 	}
-	return gen.def__namespace(name, body, opts)
+	return def__namespace(name, body, opts)
 }
 
 Opts_Def_Operator :: struct {
@@ -2982,7 +2993,7 @@ def_operator :: #force_inline proc(
 		attributes,
 		mflags,
 	}
-	return gen.def__operator(op, nspace, opts)
+	return def__operator(op, nspace, opts)
 }
 
 Opts_Def_OpCast :: struct {
@@ -3000,7 +3011,7 @@ def_opcast :: #force_inline proc(
 		body,
 		specs,
 	}
-	return gen.def__operator_cast(type, opts)
+	return def__operator_cast(type, opts)
 }
 
 Opts_Def_Param    :: struct { value  : Code }
@@ -3015,7 +3026,7 @@ def_param :: #force_inline proc(
 	opts := Opts_Def_Param {
 		value,
 	}
-	return gen.def__param(type, name, opts)
+	return def__param(type, name, opts)
 }
 
 def_template :: #force_inline proc(
@@ -3027,7 +3038,7 @@ def_template :: #force_inline proc(
 	opts := Opts_Def_Template {
 		mflags,
 	}
-	return gen.def__template(params, definition, opts)
+	return def__template(params, definition, opts)
 }
 
 Opts_Def_Type :: struct {
@@ -3051,7 +3062,7 @@ def_type :: #force_inline proc(
 		specifiers,
 		attributes,
 	}
-	return gen.def__type(name, opts)
+	return def__type(name, opts)
 }
 
 Opts_Def_Typedef :: struct {
@@ -3070,7 +3081,7 @@ def_typedef :: #force_inline proc(
 		attributes,
 		mflags,
 	}
-	return gen.def__typedef(name, type, opts)
+	return def__typedef(name, type, opts)
 }
 
 Opts_Def_Union :: struct {
@@ -3089,7 +3100,7 @@ def_union :: #force_inline proc(
 		attributes,
 		mflags,
 	}
-	return gen.def__union(name, body, opts)
+	return def__union(name, body, opts)
 }
 
 Opts_Def_Using :: struct {
@@ -3108,7 +3119,7 @@ def_using :: #force_inline proc(
 		attributes,
 		mflags,
 	}
-	return gen.def__using(name, type, opts)
+	return def__using(name, type, opts)
 }
 
 Opts_Def_Variable :: struct {
@@ -3133,21 +3144,21 @@ def_variable :: #force_inline proc(
 		attributes,
 		mflags,
 	}
-	return gen.def__variable(type, name, opts)
+	return def__variable(type, name, opts)
 }
 
-def_class_body       :: #force_inline proc(codes  : []Code)        -> Code_Body { return def_class_body_arr      (len(codes),  raw_data(codes)) }
-def_define_params    :: #force_inline proc(params : []Code_Params) -> Code_Body { return def_define_params_arr   (len(params), raw_data(params)) }
-def_enum_body        :: #force_inline proc(codes  : []Code)        -> Code_Body { return def_enum_body_arr       (len(codes),  raw_data(codes)) }
-def_export_body      :: #force_inline proc(codes  : []Code)        -> Code_Body { return def_export_body_arr     (len(codes),  raw_data(codes)) }
-def_extern_link_body :: #force_inline proc(codes  : []Code)        -> Code_Body { return def_extern_link_body_arr(len(codes),  raw_data(codes)) }
-def_function_body    :: #force_inline proc(codes  : []Code)        -> Code_Body { return def_function_body_arr   (len(codes),  raw_data(codes)) }
-def_global_body      :: #force_inline proc(codes  : []Code)        -> Code_Body { return def_global_body_arr     (len(codes),  raw_data(codes)) }
-def_namespace_body   :: #force_inline proc(codes  : []Code)        -> Code_Body { return def_namespace_body_arr  (len(codes),  raw_data(codes)) }
-def_params           :: #force_inline proc(params : []Code)        -> Code_Body { return def_params_arr          (len(params), raw_data(params)) }
-def_specifiers       :: #force_inline proc(specs  : []Code)        -> Code_Body { return def_specifiers_arr      (len(specs),  raw_data(specs)) }
-def_struct_body      :: #force_inline proc(codes  : []Code)        -> Code_Body { return def_struct_body_arr     (len(codes),  raw_data(codes)) }
-def_union_body       :: #force_inline proc(codes  : []Code)        -> Code_Body { return def_union_body_arr      (len(codes),  raw_data(codes)) }
+def_class_body       :: #force_inline proc(codes  : []Code)              -> Code_Body         { return def_class_body_arr      (cast(i32) len(codes),  raw_data(codes)) }
+def_define_params    :: #force_inline proc(params : []Code_DefineParams) -> Code_DefineParams { return def_define_params_arr   (cast(i32) len(params), raw_data(params)) }
+def_enum_body        :: #force_inline proc(codes  : []Code)              -> Code_Body         { return def_enum_body_arr       (cast(i32) len(codes),  raw_data(codes)) }
+def_export_body      :: #force_inline proc(codes  : []Code)              -> Code_Body         { return def_export_body_arr     (cast(i32) len(codes),  raw_data(codes)) }
+def_extern_link_body :: #force_inline proc(codes  : []Code)              -> Code_Body         { return def_extern_link_body_arr(cast(i32) len(codes),  raw_data(codes)) }
+def_function_body    :: #force_inline proc(codes  : []Code)              -> Code_Body         { return def_function_body_arr   (cast(i32) len(codes),  raw_data(codes)) }
+def_global_body      :: #force_inline proc(codes  : []Code)              -> Code_Body         { return def_global_body_arr     (cast(i32) len(codes),  raw_data(codes)) }
+def_namespace_body   :: #force_inline proc(codes  : []Code)              -> Code_Body         { return def_namespace_body_arr  (cast(i32) len(codes),  raw_data(codes)) }
+def_params           :: #force_inline proc(params : []Code_Params)       -> Code_Params       { return def_params_arr          (cast(i32) len(params), raw_data(params)) }
+def_specifiers       :: #force_inline proc(specs  : []Specifier)         -> Code_Specifiers   { return def_specifiers_arr      (cast(i32) len(specs),  raw_data(specs)) }
+def_struct_body      :: #force_inline proc(codes  : []Code)              -> Code_Body         { return def_struct_body_arr     (cast(i32) len(codes),  raw_data(codes)) }
+def_union_body       :: #force_inline proc(codes  : []Code)              -> Code_Body         { return def_union_body_arr      (cast(i32) len(codes),  raw_data(codes)) }
 
 @(default_calling_convention="c", link_prefix="gen_")
 foreign gencpp_c11
@@ -3164,7 +3175,7 @@ foreign gencpp_c11
 
 	cache_str :: proc(str : string) -> string_cached ---
 
-	make_code :: proc() ---
+	make_code :: proc() -> Code ---
 
 	def_attributes      :: proc(content : string) -> Code_Attributes ---
 	def_comment         :: proc(content : string) -> Code_Comment ---
@@ -3205,7 +3216,7 @@ foreign gencpp_c11
 	def_global_body_arr      :: proc(num : i32, codes : [^]Code)              -> Code_Body ---
 	def_namespace_body_arr   :: proc(num : i32, codes : [^]Code)              -> Code_Body ---
 	def_params_arr           :: proc(num : i32, codes : [^]Code_Params)       -> Code_Params ---
-	def_specifiers_arr       :: proc(num : i32, codes : [^]Code)              -> Code_Specifiers ---
+	def_specifiers_arr       :: proc(num : i32, codes : [^]Specifier)         -> Code_Specifiers ---
 	def_struct_body_arr      :: proc(num : i32, codes : [^]Code)              -> Code_Body ---
 	def_union_body_arr       :: proc(num : i32, codes : [^]Code)              -> Code_Body ---
 
@@ -3271,7 +3282,7 @@ builder_open :: proc(path : string) -> (Builder, os.Error) {
 
 builder_pad_lines :: proc(builder : ^Builder, num : i32) {
 	for _ in 0 ..< num {
-		strbuilder_append_string(builder, '\n')
+		strbuilder_append_string(& builder.buffer, "\n")
 	}
 }
 
@@ -3345,14 +3356,14 @@ parse_file :: proc(path : string) -> (Code_Body, os.Error) {
 	return body, error
 }
 
-untyped_file :: #force_inline proc(path : string) {
-	scan_file(fmt.aprintf("%s", path, allocator = allocator_info_to_odin_allocator(_ctx.allocator_temp)))
+untyped_file :: #force_inline proc(path : string) -> string {
+	return scan_file(transmute([^]c.char) strings.clone_to_cstring(path, allocator = allocator_info_to_odin_allocator(& _ctx.allocator_temp)))
 }
 
 @(default_calling_convention="c", link_prefix="gen_")
 foreign gencpp_c11
 {
-	scan_file :: proc(path : [^]c.char) ---
+	scan_file :: proc(path : [^]c.char) -> string ---
 }
 
 //#endregion("Auxiliary")
@@ -3381,7 +3392,7 @@ foreign gencpp_c11
 Allocation_Type :: enum(i32) {
 	Alloc,
 	Free,
-	FreeAll,
+	Free_All,
 	Resize,
 }
 
@@ -3407,13 +3418,15 @@ allocation_type_to_allocator_mode :: proc(type : Allocation_Type) -> mem.Allocat
 		case .Free_All: return .Free_All
 		case .Resize:   return .Resize
 	}
+	assert(false)
+	return .Query_Features
 }
 
 allocator_mode_to_allocation_type :: proc(mode : mem.Allocator_Mode) -> Allocation_Type {
 	#partial switch mode {
 		case .Alloc, .Alloc_Non_Zeroed:   return .Alloc
 		case .Free:                       return .Free
-		case .Free_All:                   return .FreeAll
+		case .Free_All:                   return .Free_All
 		case .Resize, .Resize_Non_Zeroed: return .Resize
 	}
 	assert(false)
@@ -3532,34 +3545,35 @@ strbuilder_make_string :: proc(allocator := USE_TEMP_ALLOCATOR, str : string) ->
 // which had custom verbs for string and string builder: %S for string and %SB for Str_Builder
 // This rewrite uses fmt.aprintf instead so those are have changed to just %s for odin's string (equivalent),
 // but for Str_Builder there is no equivalnet and the user must use strbuider_to_string before feeding to the fmt procedure
-strbuilder_fmt :: proc(allocator := USE_TEMP_ALLOCATOR, size : int, fmt : string, args: ..any ) -> Str_Builder {
+strbuilder_fmt :: proc(allocator := USE_TEMP_ALLOCATOR, size : int, format : string, args: ..any ) -> Str_Builder {
 	allocator := allocator
 	if allocator.procedure == nil do allocator = _ctx.allocator_temp
-	res := fmt.aprintf(fmt, ..args, allocator = allocator_info_to_odin_allocator(& allocator))
-	return strbuilder_make_length(allocator, raw_data(res), len(res))
+	res := fmt.aprintf(format, ..args, allocator = allocator_info_to_odin_allocator(& allocator))
+	return strbuilder_make_length(allocator, transmute([^]c.char) raw_data(res), len(res))
 }
 
 // NOTE: The original implementation fo the _fmt related procedures utilized gencpp's c_str_fmt_va 
 // which had custom verbs for string and string builder: %S for string and %SB for Str_Builder
 // This rewrite uses fmt.bprintf instead so those are have changed to just %s for odin's string (equivalent),
 // but for Str_Builder there is no equivalnet and the user must use strbuider_to_string before feeding to the fmt procedure
-strbuilder_fmt_buf :: proc(allocator := USE_TEMP_ALLOCATOR, fmt : string, args : ..any ) -> Str_Builder {
+strbuilder_fmt_buf :: proc(allocator := USE_TEMP_ALLOCATOR, format : string, args : ..any ) -> Str_Builder {
 	allocator := allocator
 	if allocator.procedure == nil do allocator = _ctx.allocator_temp
 	@thread_local
 	buf : [mem.Kilobyte * 128]byte
-	res := fmt.bprintf(buf[:], fmt, ..args, allocator = allocator_info_to_odin_allocator(& allocator))
-	return strbuilder_make_length(allocator, raw_data(res), len(res))
+	res := fmt.bprintf(buf[:], format, ..args)
+	return strbuilder_make_length(allocator, transmute([^]c.char) raw_data(res), len(res))
 }
 
 strbuilder_append_char :: proc(builder : ^Str_Builder, char : c.char) -> bool {
 	assert(builder != nil)
-	return strbuider_append_c_str_len(builder, & char, 1)
+	char := char
+	return strbuilder_append_c_str_len(builder, & char, 1)
 }
 
 strbuilder_append_string :: proc(builder : ^Str_Builder, str : string) -> bool {
 	assert(builder != nil)
-	return strbuilder_append_c_str_len(builder, transmute(^c.char) raw_data(str), len(str))
+	return strbuilder_append_c_str_len(builder, transmute([^]c.char) raw_data(str), len(str))
 }
 
 // NOTE: The original implementation fo the _fmt related procedures utilized gencpp's c_str_fmt_va 
@@ -3570,7 +3584,7 @@ strbuilder_append_fmt :: proc(builder : ^Str_Builder, format : string, args : ..
 	assert(builder != nil)
 	header := strbuilder_header(builder ^)
 	res := fmt.aprintf(format, ..args, allocator = allocator_info_to_odin_allocator(& header.allocator))
-	return strbuilder_append_c_str_len(builder, transmute(^c.char) raw_data(res), len(res))
+	return strbuilder_append_c_str_len(builder, transmute([^]c.char) raw_data(res), len(res))
 }
 
 // NOTE: The original implementation fo the _fmt related procedures utilized gencpp's c_str_fmt_va 
@@ -3582,7 +3596,7 @@ strbuilder_append_fmt_buf :: proc(builder : ^Str_Builder, format : string, args 
 	header := strbuilder_header(builder ^)
 	@thread_local
 	buf : [mem.Kilobyte * 128]byte
-	res := fmt.bprintf(buf, format[:], ..args, allocator = allocator_info_to_odin_allocator(& header.allocator))
+	res := fmt.bprintf(buf[:], format, ..args)
 	return strbuilder_append_c_str_len(builder, transmute([^]c.char) raw_data(res), len(res))
 }
 
@@ -3597,7 +3611,7 @@ strbuilder_capacity :: proc(builder : Str_Builder) -> int {
 }
 
 strbuilder_clear :: proc(builder : Str_Builder) {
-	strbuilder_header(builder ^).length = 0
+	strbuilder_header(builder).length = 0
 }
 
 strbiulder_duplicate :: proc(builder : Str_Builder, allocator := USE_TEMP_ALLOCATOR) -> Str_Builder {
